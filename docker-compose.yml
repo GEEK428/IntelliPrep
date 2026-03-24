@@ -10,6 +10,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=development
+      - FRONTEND_URL=http://localhost:5173
     env_file:
       - ./Backend/.env
     volumes:
@@ -21,11 +22,14 @@ services:
     build:
       context: ./Frontend
       dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:3000}
+        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
     container_name: intelliprep-frontend
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_URL=http://localhost:3000
+      - VITE_API_URL=http://localhost:3000 # Keep for dev fallback
     env_file:
       - ./Frontend/.env
     volumes:
