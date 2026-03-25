@@ -709,3 +709,117 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ================================================================
+   MOBILE RESPONSIVENESS (Top Bar & Hamburger Sidebar)
+   ================================================================ */
+.mobile-top-bar {
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 1.25rem;
+    background: rgba(8, 15, 22, 0.95);
+    border-bottom: 1px solid rgba(144, 173, 198, 0.16);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+}
+
+.brand-block-mobile {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    h2 {
+        margin: 0;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #eaf2f8;
+    }
+}
+
+.hamburger-btn, .close-sidebar-btn {
+    background: transparent;
+    border: none;
+    color: #eaf2f8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 0.4rem;
+    transition: background 0.2s;
+    
+    &:hover {
+        background: rgba(144, 173, 198, 0.15);
+    }
+    
+    span {
+        font-size: 1.8rem;
+    }
+}
+
+.close-sidebar-btn {
+    display: none;
+}
+
+.mobile-sidebar-overlay {
+    display: none;
+}
+
+@media (max-width: 850px) {
+    .dashboard-page {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .mobile-top-bar {
+        display: flex;
+    }
+
+    .sidebar-header-mobile {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+        
+        .brand-block {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+    }
+    
+    .dashboard-sidebar {
+        position: fixed;
+        left: -100%;
+        top: 0;
+        bottom: 0;
+        width: 280px;
+        z-index: 100;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        padding-top: 1.5rem;
+        
+        &.open {
+            left: 0;
+            box-shadow: 10px 0 20px rgba(0,0,0,0.5);
+        }
+    }
+    
+    .close-sidebar-btn {
+        display: flex;
+    }
+
+    .mobile-sidebar-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(2px);
+        z-index: 90;
+    }
+    
+    .dashboard-main {
+        flex: 1;
+        padding: 1rem;
+    }
+}

@@ -54,6 +54,9 @@ const Register = () => {
         const result = await handleRegister({ username, email: normalizedEmail, password })
         if (result?.ok) {
             setRegistered(true)
+            setTimeout(() => {
+                navigate('/login')
+            }, 2000)
             return
         }
         setError(result?.message || "Registration failed.")
@@ -88,7 +91,7 @@ const Register = () => {
                     {registered ? (
                         <div className="success-dialogue">
                             <h3>Registration Successful!</h3>
-                            <p>Please check your inbox at <strong>{email}</strong> for a verification link.</p>
+                            <p>You can now sign in to your dashboard.</p>
                             <button className="button primary-button login-btn" onClick={() => navigate('/login')}>Back to Sign In</button>
                         </div>
                     ) : (

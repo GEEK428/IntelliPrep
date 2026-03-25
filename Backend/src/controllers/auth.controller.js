@@ -205,31 +205,17 @@ async function registerUserController(req, res) {
 
     const hash = await bcrypt.hash(password, 10)
 
-    const rawVerifyToken = crypto.randomBytes(32).toString("hex")
-    const hashedVerifyToken = hashResetToken(rawVerifyToken)
-
-    // Remove any previous pending registration for same email
-    await pendingUserModel.deleteMany({ email: normalizedEmail })
-
-    await pendingUserModel.create({
+    await userModel.create({
         username,
         email: normalizedEmail,
         password: hash,
-        verifyToken: hashedVerifyToken
-    })
-
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173"
-    const verifyUrl = `${frontendUrl}/verify-email/${rawVerifyToken}`
-
-    await sendVerificationEmail({
-        email: normalizedEmail,
-        verifyUrl
+        authProvider: "local",
+        isBlocked: false
     })
 
     res.status(201).json({
-        message: "Please check your email to verify your account and complete registration."
+        message: "Registration completely successful! You can now log in."
     })
-
 }
 
 
