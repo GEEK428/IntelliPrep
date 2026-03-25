@@ -122,23 +122,28 @@ async function sendForgotPasswordEmail({ email, resetUrl }) {
         }
     })
 
-    await transporter.sendMail({
-        from: SMTP_FROM || SMTP_USER,
-        to: email,
-        subject: "Reset your IntelliPrep password",
-        text: `Use this link to reset your password: ${resetUrl}\n\nThis link expires in 15 minutes.`,
-        html: `
-            <div style="font-family: Arial, sans-serif; color: #111;">
-                <h2>Reset your IntelliPrep password</h2>
-                <p>We received a request to reset your password.</p>
-                <p>
-                    <a href="${resetUrl}" target="_blank" rel="noopener noreferrer">Reset Password</a>
-                </p>
-                <p>This link expires in 15 minutes.</p>
-                <p>If you did not request this, you can ignore this email.</p>
-            </div>
-        `
-    })
+    try {
+        await transporter.sendMail({
+            from: SMTP_FROM || SMTP_USER,
+            to: email,
+            subject: "Reset your IntelliPrep password",
+            text: `Use this link to reset your password: ${resetUrl}\n\nThis link expires in 15 minutes.`,
+            html: `
+                <div style="font-family: Arial, sans-serif; color: #111;">
+                    <h2>Reset your IntelliPrep password</h2>
+                    <p>We received a request to reset your password.</p>
+                    <p>
+                        <a href="${resetUrl}" target="_blank" rel="noopener noreferrer">Reset Password</a>
+                    </p>
+                    <p>This link expires in 15 minutes.</p>
+                    <p>If you did not request this, you can ignore this email.</p>
+                </div>
+            `
+        })
+    } catch (e) {
+        console.log(`[ForgotPassword] Failed to send: ${e.message}`)
+        throw new Error("Email service is temporarily unavailable. Please try again later.")
+    }
 }
 
 async function sendVerificationEmail({ email, verifyUrl }) {
@@ -165,25 +170,30 @@ async function sendVerificationEmail({ email, verifyUrl }) {
         }
     })
 
-    await transporter.sendMail({
-        from: SMTP_FROM || SMTP_USER,
-        to: email,
-        subject: "Verify your IntelliPrep account",
-        text: `Welcome! Use this link to verify your email: ${verifyUrl}\n\nThis link expires in 24 hours.`,
-        html: `
-            <div style="font-family: Arial, sans-serif; color: #111;">
-                <h2>Welcome to IntelliPrep!</h2>
-                <p>Please verify your email address to complete your registration.</p>
-                <p>
-                    <a href="${verifyUrl}" target="_blank" rel="noopener noreferrer"
-                       style="display:inline-block;padding:10px 24px;background:#569bcd;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;"
-                    >Verify Email</a>
-                </p>
-                <p>This link expires in 24 hours.</p>
-                <p>If you did not create an account, you can ignore this email.</p>
-            </div>
-        `
-    })
+    try {
+        await transporter.sendMail({
+            from: SMTP_FROM || SMTP_USER,
+            to: email,
+            subject: "Verify your IntelliPrep account",
+            text: `Welcome! Use this link to verify your email: ${verifyUrl}\n\nThis link expires in 24 hours.`,
+            html: `
+                <div style="font-family: Arial, sans-serif; color: #111;">
+                    <h2>Welcome to IntelliPrep!</h2>
+                    <p>Please verify your email address to complete your registration.</p>
+                    <p>
+                        <a href="${verifyUrl}" target="_blank" rel="noopener noreferrer"
+                           style="display:inline-block;padding:10px 24px;background:#569bcd;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;"
+                        >Verify Email</a>
+                    </p>
+                    <p>This link expires in 24 hours.</p>
+                    <p>If you did not create an account, you can ignore this email.</p>
+                </div>
+            `
+        })
+    } catch (e) {
+        console.log(`[VerifyEmail] Failed to send: ${e.message}`)
+        throw new Error("Email service is temporarily unavailable. Please try again later.")
+    }
 }
 
 /**
