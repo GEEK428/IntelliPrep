@@ -245,7 +245,13 @@
         background: rgba(131, 167, 196, 0.2);
         color: rgba(214, 228, 241, 0.84);
         cursor: pointer;
-        font-size: 0.66rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        span.material-symbols-outlined {
+            font-size: 1.1rem;
+        }
     }
 
     .form-row {

@@ -89,7 +89,7 @@ const Register = () => {
                         <div className="success-dialogue">
                             <h3>Registration Successful!</h3>
                             <p>Please check your inbox at <strong>{email}</strong> for a verification link.</p>
-                            <button className="auth-btn" onClick={() => navigate('/login')}>Back to Sign In</button>
+                            <button className="button primary-button login-btn" onClick={() => navigate('/login')}>Back to Sign In</button>
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit}>
@@ -172,7 +172,7 @@ const Register = () => {
 
                             <button
                                 type="submit"
-                                className="auth-btn"
+                                className="button primary-button login-btn"
                                 disabled={!isPasswordValid || !username || !email}
                             >
                                 Get Started
@@ -181,9 +181,9 @@ const Register = () => {
                     )}
 
                     {!registered && (
-                        <div className="auth-switch">
+                        <p className="auth-footer-text">
                             Already have an account? <Link to="/login">Sign In</Link>
-                        </div>
+                        </p>
                     )}
                 </section>
             </div>
