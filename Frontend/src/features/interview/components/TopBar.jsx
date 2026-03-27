@@ -7,7 +7,8 @@ import { useLocation, useNavigate } from 'react-router';
 const PAGE_TITLES = {
     '/dashboard':        'Dashboard',
     '/':                 'Resume Analysis',
-    '/resume-builder':   'Resume Builder',
+    '/resume-optimizer': 'Resume Optimizer',
+    '/resume-builder':   'Resume Optimizer',
     '/notes':            'Notes & Prep Space',
     '/progress-tracker': 'Progress Tracker',
     '/settings':         'Settings',

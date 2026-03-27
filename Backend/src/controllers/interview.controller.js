@@ -1,4 +1,4 @@
-const pdfParse = require("pdf-parse")
+const pdfParseModule = require("pdf-parse")
 const mammoth = require("mammoth")
 const WordExtractor = require("word-extractor")
 const os = require("os")
@@ -7,6 +7,36 @@ const path = require("path")
 const crypto = require("crypto")
 const { generateInterviewReport, generateResumePdf, generatePdfFromHtml } = require("../services/ai.service")
 const interviewReportModel = require("../models/interviewReport.model")
+
+function resolvePdfParseFn() {
+    if (typeof pdfParseModule === "function") return pdfParseModule
+    if (typeof pdfParseModule?.default === "function") return pdfParseModule.default
+    if (typeof pdfParseModule?.pdfParse === "function") return pdfParseModule.pdfParse
+    return null
+}
+
+async function extractPdfText(buffer) {
+    const parsePdf = resolvePdfParseFn()
+    if (parsePdf) {
+        const data = await parsePdf(buffer)
+        return (data?.text || "").trim()
+    }
+
+    const PDFParseClass = pdfParseModule?.PDFParse
+    if (typeof PDFParseClass === "function") {
+        const parser = new PDFParseClass({ data: buffer })
+        try {
+            const result = await parser.getText()
+            return (result?.text || "").trim()
+        } finally {
+            if (typeof parser.destroy === "function") {
+                await parser.destroy().catch(() => {})
+            }
+        }
+    }
+
+    throw new Error("PDF parser is not available on server. Please upload DOCX for now.")
+}
 
 function extractInsights({ topSkills = [], skillGaps = [] }) {
     const cleanTopSkills = (topSkills || [])
@@ -130,8 +160,7 @@ async function extractResumeTextFromUpload(file) {
     const isDoc  = mimeType === "application/msword" || extension === ".doc"
 
     if (isPdf) {
-        const data = await pdfParse(file.buffer)
-        return (data.text || "").trim()
+        return extractPdfText(file.buffer)
     }
 
     if (isDocx) {

@@ -1,21 +1,17 @@
 import React, { useEffect, useRef, useState } from "react"
-import { useNavigate } from "react-router"
 import "../style/home.scss"
 import "../style/resume-builder.scss"
 import { useInterview } from "../hooks/useInterview"
 import Sidebar from "../components/Sidebar"
 import TopBar from "../components/TopBar"
-import NotificationBell from "../components/NotificationBell"
 
 const DOWNLOAD_HISTORY_KEY = "intelliprep_resume_download_history"
 
 const ResumeBuilder = () => {
-    const navigate = useNavigate()
     const { loading, generateReport, getResumePdfBlob } = useInterview()
     const fileInputRef = useRef(null)
 
     const [jobDescription, setJobDescription] = useState("")
-    const [selfDescription, setSelfDescription] = useState("")
     const [selectedFile, setSelectedFile] = useState("")
     const [error, setError] = useState("")
     const [latestReportId, setLatestReportId] = useState("")
@@ -26,7 +22,7 @@ const ResumeBuilder = () => {
     const formatDateTime = (value) => new Date(value).toLocaleString()
 
     useEffect(() => {
-        document.title = "Resume Builder | IntelliPrep"
+        document.title = "Resume Optimizer | IntelliPrep"
         const stored = localStorage.getItem(DOWNLOAD_HISTORY_KEY)
         if (stored) {
             try {
@@ -56,38 +52,24 @@ const ResumeBuilder = () => {
 
     const triggerDownload = async ({ reportId, fileName }) => {
         if (!reportId) return
-        
-        // Open a blank tab immediately to bypass mobile popup blockers (needs a direct user click)
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-        let downloadWindow = null;
-        if (isMobile) {
-            downloadWindow = window.open('about:blank', '_blank');
-        }
 
         try {
             const blob = await getResumePdfBlob(reportId)
             if (!blob) {
-                if (downloadWindow) downloadWindow.close();
                 return
             }
             const url = window.URL.createObjectURL(blob)
-            
-            if (isMobile && downloadWindow) {
-                // Redirect the already-open tab to the PDF blob
-                downloadWindow.location.href = url;
-            } else {
-                const link = document.createElement("a")
-                link.href = url
-                link.setAttribute("download", fileName)
-                document.body.appendChild(link)
-                link.click()
-                link.remove()
-                // Revoke after small delay to ensure click finishes
-                setTimeout(() => window.URL.revokeObjectURL(url), 1000)
-            }
+            const link = document.createElement("a")
+            link.href = url
+            link.setAttribute("download", fileName)
+            link.setAttribute("target", "_blank")
+            link.setAttribute("rel", "noopener noreferrer")
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            setTimeout(() => window.URL.revokeObjectURL(url), 2500)
         } catch (e) {
-            if (downloadWindow) downloadWindow.close();
-            console.error(e);
+            console.error(e)
         }
     }
 
@@ -99,8 +81,8 @@ const ResumeBuilder = () => {
             setError("Job description is required.")
             return
         }
-        if (!resumeFile && !selfDescription.trim()) {
-            setError("Upload a resume or add self description.")
+        if (!resumeFile) {
+            setError("Upload a resume file to continue.")
             return
         }
 
@@ -109,7 +91,7 @@ const ResumeBuilder = () => {
         try {
             generated = await generateReport({
                 jobDescription: jobDescription.trim(),
-                selfDescription: selfDescription.trim(),
+                selfDescription: "",
                 resumeFile
             })
 
@@ -162,8 +144,8 @@ const ResumeBuilder = () => {
             <section className="dashboard-main resume-builder-main">
                 <TopBar />
                 <div className="page-header" style={{ marginBottom: '1rem' }}>
-                    <h1>Resume Builder</h1>
-                    <p className="subtitle">Upload your resume + job listing to generate a tailored, one-page PDF.</p>
+                    <h1>Resume Optimizer</h1>
+                    <p className="subtitle">Upload your resume + job listing to generate a tailored, one-page optimized PDF.</p>
                 </div>
 
                 <section className="builder-grid">
@@ -172,7 +154,7 @@ const ResumeBuilder = () => {
                             <div className="upload-icon">UP</div>
                             <h3>Resume Source</h3>
                             <p className="desktop-only-description">Choose your latest profile source before generating an optimized resume.</p>
-                            <p>Upload resume or use self description with job description.</p>
+                            <p>Upload resume and paste job description to optimize your profile.</p>
                             <button type="button" onClick={() => fileInputRef.current?.click()}>Select File</button>
                             <input
                                 ref={fileInputRef}
@@ -186,12 +168,7 @@ const ResumeBuilder = () => {
                             )}
                         </div>
 
-                        <div className="builder-inputs">
-                            <textarea
-                                placeholder="Self description (optional if resume uploaded)"
-                                value={selfDescription}
-                                onChange={(e) => setSelfDescription(e.target.value)}
-                            />
+                        <div className="builder-inputs builder-inputs--single">
                             <textarea
                                 placeholder="Job description (required)"
                                 value={jobDescription}
@@ -244,14 +221,14 @@ const ResumeBuilder = () => {
                         <div className="preview-body">
                             {previewUrl ? (
                                 <>
-                                    <iframe title="resume-preview" src={previewUrl} className="preview-iframe-desktop" />
-                                    <div className="preview-mobile-fallback">
-                                        <span className="material-symbols-outlined" style={{ fontSize: '2.5rem', color: '#9fd0f4' }}>picture_as_pdf</span>
-                                        <p>Your resume PDF is ready!</p>
-                                        <button type="button" onClick={() => window.open(previewUrl, '_blank')}>
-                                            Open PDF Preview
-                                        </button>
-                                    </div>
+                                    <object
+                                        data={previewUrl}
+                                        type="application/pdf"
+                                        className="preview-pdf-frame"
+                                        aria-label="Resume preview"
+                                    >
+                                        <iframe title="resume-preview" src={previewUrl} className="preview-pdf-frame" />
+                                    </object>
                                 </>
                             ) : (
                                 <div className="preview-placeholder">Generated resume preview will appear here.</div>

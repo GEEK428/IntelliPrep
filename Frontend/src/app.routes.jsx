@@ -41,6 +41,10 @@ export const router = createBrowserRouter([
         element: <Protected><Home /></Protected>
     },
     {
+        path: "/resume-optimizer",
+        element: <Protected><ResumeBuilder /></Protected>
+    },
+    {
         path: "/resume-builder",
         element: <Protected><ResumeBuilder /></Protected>
     },

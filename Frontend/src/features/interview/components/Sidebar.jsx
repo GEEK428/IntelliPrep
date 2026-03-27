@@ -23,7 +23,7 @@ const Sidebar = () => {
     const navItems = [
         { path: "/dashboard",        icon: "dashboard",       label: "Dashboard" },
         { path: "/",                 icon: "analytics",       label: "Resume Analysis" },
-        { path: "/resume-builder",   icon: "edit_document",   label: "Resume Builder" },
+        { path: "/resume-optimizer", icon: "edit_document",   label: "Resume Optimizer" },
         { path: "/notes",            icon: "book",            label: "Notes / Prep Space" },
         { path: "/progress-tracker", icon: "monitoring",      label: "Track Your Progress" },
         { path: "/settings",         icon: "settings",        label: "Settings" },
@@ -106,4 +106,3 @@ const Sidebar = () => {
 }
 
 export default Sidebar
-
