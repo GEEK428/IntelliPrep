@@ -9,7 +9,7 @@ import {
     updateGoal
 } from "../services/progress.api"
 import Sidebar from "../components/Sidebar"
-import NotificationBell from "../components/NotificationBell"
+import TopBar from "../components/TopBar"
 import Loader from "../../../components/Loader"
 
 function formatDateKey(dateValue) {
@@ -264,16 +264,14 @@ const ProgressTracker = () => {
             <Sidebar />
 
             <section className="dashboard-main progress-main">
-                <header className="dashboard-header progress-head sleek">
-                    <div>
-                        <p className="dashboard-kicker">Analytics Dashboard</p>
-                        <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '1.8rem', color: '#9fd0f4' }}>monitoring</span>
-                            Track Your Progress
-                        </h1>
-                    </div>
-                    <NotificationBell />
-                </header>
+                <TopBar />
+                <div className="page-header" style={{ marginBottom: '1.5rem', marginTop: '1rem' }}>
+                    <p className="kicker">Analytics Dashboard</p>
+                    <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '1.8rem' }}>
+                        <span className="material-symbols-outlined">monitoring</span>
+                        Track Your Progress
+                    </h1>
+                </div>
 
                 <section className="progress-grid compact-2">
                     <article className="progress-card playcard glass">

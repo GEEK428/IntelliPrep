@@ -97,41 +97,48 @@ const Register = () => {
                     ) : (
                         <form onSubmit={handleSubmit}>
                             <div className="input-group">
-                                <label htmlFor="username">
-                                    <span className="label-with-icon"><UserIcon />Username</span>
+                                <label className="label-row" htmlFor="username">
+                                    <span>Username</span>
                                 </label>
-                                <input
-                                    onChange={(e) => setUsername(e.target.value)}
-                                    type="text"
-                                    id="username"
-                                    name="username"
-                                    placeholder="Enter your username"
-                                    required
-                                    minLength="3"
-                                />
+                                <div className="input-wrapper">
+                                    <span className="material-symbols-outlined input-icon">person</span>
+                                    <input
+                                        onChange={(e) => setUsername(e.target.value)}
+                                        type="text"
+                                        id="username"
+                                        name="username"
+                                        placeholder="Enter your username"
+                                        required
+                                        minLength="3"
+                                    />
+                                </div>
                             </div>
 
                             <div className="input-group">
-                                <label htmlFor="email">
-                                    <span className="label-with-icon"><EmailIcon />Email Address</span>
+                                <label className="label-row" htmlFor="email">
+                                    <span>Email Address</span>
                                 </label>
-                                <input
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    type="email"
-                                    id="email"
-                                    name="email"
-                                    placeholder="name@example.com"
-                                    pattern="^[^\s@]+@[^\s@]+\.[^\s@]{2,}$"
-                                    title="Use a valid email address like name@example.com"
-                                    required
-                                />
+                                <div className="input-wrapper">
+                                    <span className="material-symbols-outlined input-icon">mail</span>
+                                    <input
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        type="email"
+                                        id="email"
+                                        name="email"
+                                        placeholder="name@example.com"
+                                        pattern="^[^\s@]+@[^\s@]+\.[^\s@]{2,}$"
+                                        title="Use a valid email address like name@example.com"
+                                        required
+                                    />
+                                </div>
                             </div>
 
-                            <div className="input-group">
-                                <label htmlFor="password">
-                                    <span className="label-with-icon"><LockIcon />Secure Password</span>
+                            <div className="input-group" style={{ marginBottom: '0.5rem' }}>
+                                <label className="label-row" htmlFor="password">
+                                    <span>Secure Password</span>
                                 </label>
-                                <div className="password-field">
+                                <div className="input-wrapper">
+                                    <span className="material-symbols-outlined input-icon">lock</span>
                                     <input
                                         onChange={(e) => setPassword(e.target.value)}
                                         type={showPassword ? "text" : "password"}

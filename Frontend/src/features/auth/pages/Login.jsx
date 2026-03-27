@@ -47,7 +47,7 @@ const Login = () => {
                     size: "large",
                     text: "continue_with",
                     shape: "pill",
-                    width: "320"
+                    width: "260"
                 })
             }
         }
@@ -96,47 +96,63 @@ const Login = () => {
                         <h2>IntelliPrep</h2>
                     </div>
 
-                    <h1>Crack Interviews <span className='highlight'>with AI</span></h1>
-
-                    <div className='hero-points hero-points--cards'>
-                        <p>Get real interview questions</p>
-                        <p>Identify skill gaps</p>
-                        <p>Generate ATS-ready resumes</p>
+                    <div className="hero-content">
+                        <p className="kicker">THE DIGITAL CURATOR</p>
+                        <h1>Crack Interviews <br/><span className='highlight'>with Precision</span></h1>
+                        <p className="hero-desc">Unlock your career potential with our curated resume intelligence and real-time interview simulations.</p>
+                        
+                        <div className="hero-feature-cards">
+                            <div className="feature-card">
+                                <div className="icon-box"><span className="material-symbols-outlined">bar_chart</span></div>
+                                <div className="card-text">
+                                    <h3>Resume Analysis</h3>
+                                    <p>Deep-scan your professional profile against industry benchmarks in seconds.</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
                 <section className="auth-panel">
-                    <h2 className='panel-title'><SparkIcon />Sign In</h2>
-                    <p className='auth-subtitle'>All-in-One Platform for Interview Success.</p>
+                    <h2 className='panel-title'>Welcome Back</h2>
+                    <p className='auth-subtitle'>Sign in to continue your preparation journey.</p>
+                    
+                    <div className='google-login-wrap' ref={googleBtnRef}></div>
+                    <div className='oauth-divider'><span>OR WITH EMAIL</span></div>
 
                     <form onSubmit={handleSubmit}>
                         <div className="input-group">
                             <label htmlFor="email">
-                                <span className='label-with-icon'><EmailIcon />Email Address</span>
+                                EMAIL ADDRESS
                             </label>
-                            <input
-                                onChange={(e) => { setEmail(e.target.value) }}
-                                type="email"
-                                id="email"
-                                name='email'
-                                placeholder='name@example.com'
-                                pattern="^[^\s@]+@[^\s@]+\.[^\s@]{2,}$"
-                                title="Use a valid email address like name@example.com"
-                                required
-                            />
+                            <div className="input-wrapper">
+                                <span className="material-symbols-outlined input-icon">mail</span>
+                                <input
+                                    onChange={(e) => { setEmail(e.target.value) }}
+                                    type="email"
+                                    id="email"
+                                    name='email'
+                                    placeholder='name@company.com'
+                                    pattern="^[^\s@]+@[^\s@]+\.[^\s@]{2,}$"
+                                    title="Use a valid email address like name@example.com"
+                                    required
+                                />
+                            </div>
                         </div>
 
                         <div className="input-group">
-                            <label htmlFor="password">
-                                <span className='label-with-icon'><LockIcon />Password</span>
-                            </label>
-                            <div className='password-field'>
+                            <div className="label-row">
+                                <label htmlFor="password">PASSWORD</label>
+                                <Link to='/forgot-password' tabIndex="-1">Forgot Password?</Link>
+                            </div>
+                            <div className='password-field input-wrapper'>
+                                <span className="material-symbols-outlined input-icon">lock</span>
                                 <input
                                     onChange={(e) => { setPassword(e.target.value) }}
                                     type={showPassword ? "text" : "password"}
                                     id="password"
                                     name='password'
-                                    placeholder='Enter password'
+                                    placeholder='••••••••'
                                     required
                                 />
                                 <button
@@ -152,29 +168,20 @@ const Login = () => {
                             </div>
                         </div>
 
-                        <div className='form-row'>
-                            <label className='show-pass'>
-                                <input
-                                    type='checkbox'
-                                    checked={showPassword}
-                                    onChange={() => setShowPassword((v) => !v)}
-                                />
-                                Show Password
-                            </label>
-                            <Link to='/forgot-password'>Forgot Password?</Link>
-                        </div>
+                        <button className='button primary-button login-btn'>Sign In</button>
 
-                        <button className='button primary-button login-btn'>Secure Login</button>
+                        <p className='auth-footer-text' style={{ textAlign: 'center', marginTop: '1rem' }}>
+                            Don't have an account? <Link to={'/register'}>Create an account</Link>
+                        </p>
                     </form>
 
-                    <div className='oauth-divider'><span>or continue with</span></div>
-                    <div className='google-login-wrap' ref={googleBtnRef}></div>
+                    {error && <p className='auth-error' style={{marginTop: '1rem', textAlign: 'center'}}>{error}</p>}
 
-                    {error && <p className='auth-error'>{error}</p>}
-
-                    <p className='auth-footer-text'>
-                        Don't have an account? <Link to={'/register'}>Register</Link>
-                    </p>
+                    <footer className="auth-footer-links">
+                        <Link to="#">PRIVACY POLICY</Link>
+                        <Link to="#">TERMS OF SERVICE</Link>
+                        <Link to="#">HELP CENTER</Link>
+                    </footer>
                 </section>
             </div>
         </main>

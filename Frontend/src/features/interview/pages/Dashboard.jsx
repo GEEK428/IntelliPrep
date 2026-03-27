@@ -6,6 +6,7 @@ import { getNotes } from "../services/notes.api"
 import { getProgressOverview } from "../services/progress.api"
 import "../style/home.scss"
 import Sidebar from "../components/Sidebar"
+import TopBar from "../components/TopBar"
 import NotificationBell from "../components/NotificationBell"
 
 const Dashboard = () => {
@@ -88,18 +89,14 @@ const Dashboard = () => {
             <Sidebar />
 
             <section className="dashboard-main" style={{ gap: '0.6rem' }}>
-                <header className="dashboard-header" style={{ marginBottom: '0.2rem' }}>
-                    <div>
-                        <p className="dashboard-kicker">WELCOME BACK, <span style={{color:"#eaf2f8", textTransform: 'none', fontWeight: 'bold'}}>{user?.fullName || user?.username || 'GUEST'}</span></p>
-                        <h1 style={{fontSize: '1.2rem', marginTop: '0.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: '#9fd0f4' }}>dashboard</span>
-                            The Intelligence Dashboard
-                        </h1>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <NotificationBell />
-                    </div>
-                </header>
+                <TopBar />
+                <div className="page-header" style={{ marginBottom: '1rem', marginTop: '1rem' }}>
+                    <p className="kicker">WELCOME BACK, <span style={{color:"#eaf2f8", textTransform: 'none', fontWeight: 'bold'}}>{user?.fullName || user?.username || ''}</span></p>
+                    <h1 style={{fontSize: '1.2rem', marginTop: '0.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: '#9fd0f4' }}>dashboard</span>
+                        The Intelligence Dashboard
+                    </h1>
+                </div>
 
                 {/* ── High Level Stats Grid ── */}
                 <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.6rem', marginBottom: '0.5rem' }}>

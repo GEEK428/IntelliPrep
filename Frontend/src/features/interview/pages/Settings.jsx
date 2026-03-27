@@ -4,6 +4,7 @@ import "../style/home.scss"
 import "../style/settings.scss"
 import { useAuth } from "../../auth/hooks/useAuth"
 import Sidebar from "../components/Sidebar"
+import TopBar from "../components/TopBar"
 import NotificationBell from "../components/NotificationBell"
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"]
@@ -263,16 +264,14 @@ const Settings = () => {
             <Sidebar />
 
             <section className="dashboard-main settings-main">
-                <header className="dashboard-header">
-                    <div>
-                        <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '1.8rem', color: '#9fd0f4' }}>settings</span>
-                            Settings
-                        </h1>
-                        <p className="dashboard-subtitle">Update your profile details, change password, or manage your account.</p>
-                    </div>
-                    <NotificationBell />
-                </header>
+                <TopBar />
+                <div className="page-header" style={{ marginBottom: '1.5rem', marginTop: '1rem' }}>
+                    <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '1.8rem' }}>
+                        <span className="material-symbols-outlined">settings</span>
+                        Settings
+                    </h1>
+                    <p className="subtitle">Update your profile details, change password, or manage your account.</p>
+                </div>
 
                 <section className="settings-grid">
                     <article className="settings-card">

@@ -4,7 +4,7 @@ import "../style/home.scss"
 import "../style/notes.scss"
 import { createNote, deleteNote, exportNotesPdf, generateAiAnswer, getNotes, updateNote } from "../services/notes.api"
 import Sidebar from "../components/Sidebar"
-import NotificationBell from "../components/NotificationBell"
+import TopBar from "../components/TopBar"
 import Loader from "../../../components/Loader"
 
 const COMMON_SUBDOMAINS = [
@@ -130,9 +130,9 @@ const Notes = () => {
         return {
             style: {
                 background: `conic-gradient(
-                    #67d7ac 0deg ${understoodDeg}deg,
-                    #ffb9b3 ${understoodDeg}deg ${understoodDeg + revisionDeg}deg,
-                    rgba(142, 201, 244, 0.3) ${understoodDeg + revisionDeg}deg 360deg
+                    #1b6b55 0deg ${understoodDeg}deg,
+                    #8e3c35 ${understoodDeg}deg ${understoodDeg + revisionDeg}deg,
+                    #151d28 ${understoodDeg + revisionDeg}deg 360deg
                 )`
             },
             understoodPct,
@@ -399,16 +399,14 @@ const Notes = () => {
             <Sidebar />
 
             <section className="dashboard-main notes-main">
-                <header className="dashboard-header">
-                    <div>
-                        <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '1.8rem', color: '#9fd0f4' }}>menu_book</span>
-                            Notes / Prep Space
-                        </h1>
-                        <p className="dashboard-subtitle">Create, organize, and review interview questions with answers — filter by domain, difficulty, and confidence.</p>
-                    </div>
-                    <NotificationBell />
-                </header>
+                <TopBar />
+                <div className="page-header" style={{ marginBottom: '1.5rem', marginTop: '1rem' }}>
+                    <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '1.8rem' }}>
+                        <span className="material-symbols-outlined">menu_book</span>
+                        Notes / Prep Space
+                    </h1>
+                    <p className="subtitle">Create, organize, and review interview questions with answers.</p>
+                </div>
 
                 <div className="notes-search-row">
                     <div className="notes-search-wrap">

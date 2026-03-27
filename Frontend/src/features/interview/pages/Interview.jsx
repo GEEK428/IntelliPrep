@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router"
 import { useInterview } from "../hooks/useInterview"
 import Sidebar from "../components/Sidebar"
-import NotificationBell from "../components/NotificationBell"
+import TopBar from "../components/TopBar"
 import Loader from "../../../components/Loader"
 import "../style/home.scss"
 import "../style/interview.scss"
@@ -52,42 +52,40 @@ const Interview = () => {
             <Sidebar />
 
             <section className="dashboard-main interview-main">
-                <header className="dashboard-header">
-                    <div>
-                        <h1 style={{ fontSize: '1.4rem', margin: 0, marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '1.6rem', color: '#9fd0f4' }}>analytics</span>
-                            {safeReport.title}
-                        </h1>
-                        <p className="dashboard-subtitle" style={{ maxWidth: '600px', lineHeight: '1.4', fontSize: '0.8rem' }}>Your detailed match report with strengths, skill gaps, practice questions, and a preparation roadmap.</p>
-                    </div>
-                    <NotificationBell />
-                </header>
+                <TopBar />
+                <div className="page-header" style={{ marginBottom: '1.5rem', marginTop: '1rem' }}>
+                    <h1 style={{ fontSize: '1.4rem', margin: 0, marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '1.6rem', color: '#9fd0f4' }}>analytics</span>
+                        {safeReport.title}
+                    </h1>
+                    <p className="subtitle" style={{ maxWidth: '600px', lineHeight: '1.4', fontSize: '0.8rem' }}>Your detailed match report with strengths, skill gaps, practice questions, and a preparation roadmap.</p>
+                </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                     <section className="interview-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.8rem' }}>
-                        <article className="stat-card" style={{ background: 'linear-gradient(145deg, rgba(88, 121, 151, 0.1), rgba(10, 18, 27, 0.2))', border: '1px solid rgba(146, 173, 196, 0.2)', borderRadius: '0.6rem', padding: '1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                        <article className="stat-card" style={{ background: '#090e15', border: '1px solid rgba(255, 255, 255, 0.03)', borderRadius: '1rem', padding: '1.2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.4rem', transition: 'all 0.2s' }}>
                             <div style={{ display: 'flex', justifyContent: 'center', color: '#6fb2e3' }}>
                                 <span className="material-symbols-outlined" style={{ fontSize: '1.5rem' }}>target</span>
                             </div>
                             <h3 style={{ fontSize: '1.8rem', margin: '0', color: '#ffffff' }}>{safeReport.matchScore}%</h3>
-                            <p className="stat-label" style={{ margin: 0, fontWeight: 'bold', fontSize: '0.8rem' }}>Match Score</p>
-                            <span className="stat-note" style={{ color: 'rgba(234, 243, 251, 0.7)', fontSize: '0.65rem' }}>Profile fit for target role</span>
+                            <p className="stat-label" style={{ margin: 0, fontWeight: '700', fontSize: '0.75rem', color: '#556272' }}>Match Score</p>
+                            <span className="stat-note" style={{ color: 'rgba(234, 243, 251, 0.5)', fontSize: '0.65rem' }}>Profile fit for target role</span>
                         </article>
-                        <article className="stat-card" style={{ background: 'linear-gradient(145deg, rgba(88, 121, 151, 0.1), rgba(10, 18, 27, 0.2))', border: '1px solid rgba(146, 173, 196, 0.2)', borderRadius: '0.6rem', padding: '1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'center', color: '#4CAF50' }}>
+                        <article className="stat-card" style={{ background: '#090e15', border: '1px solid rgba(255, 255, 255, 0.03)', borderRadius: '1rem', padding: '1.2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.4rem', transition: 'all 0.2s' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', color: '#67d7ac' }}>
                                 <span className="material-symbols-outlined" style={{ fontSize: '1.5rem' }}>military_tech</span>
                             </div>
                             <h3 style={{ fontSize: '1.8rem', margin: '0', color: '#ffffff' }}>{safeReport.topSkills.length}</h3>
-                            <p className="stat-label" style={{ margin: 0, fontWeight: 'bold', fontSize: '0.8rem' }}>Top Skills</p>
-                            <span className="stat-note" style={{ color: 'rgba(234, 243, 251, 0.7)', fontSize: '0.65rem' }}>Strongly aligned areas</span>
+                            <p className="stat-label" style={{ margin: 0, fontWeight: '700', fontSize: '0.75rem', color: '#556272' }}>Top Skills</p>
+                            <span className="stat-note" style={{ color: 'rgba(234, 243, 251, 0.5)', fontSize: '0.65rem' }}>Strongly aligned areas</span>
                         </article>
-                        <article className="stat-card" style={{ background: 'linear-gradient(145deg, rgba(88, 121, 151, 0.1), rgba(10, 18, 27, 0.2))', border: '1px solid rgba(146, 173, 196, 0.2)', borderRadius: '0.6rem', padding: '1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'center', color: '#ff6b6b' }}>
+                        <article className="stat-card" style={{ background: '#090e15', border: '1px solid rgba(255, 255, 255, 0.03)', borderRadius: '1rem', padding: '1.2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.4rem', transition: 'all 0.2s' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', color: '#ffb9b3' }}>
                                 <span className="material-symbols-outlined" style={{ fontSize: '1.5rem' }}>psychology_alt</span>
                             </div>
                             <h3 style={{ fontSize: '1.8rem', margin: '0', color: '#ffffff' }}>{safeReport.skillGaps.length}</h3>
-                            <p className="stat-label" style={{ margin: 0, fontWeight: 'bold', fontSize: '0.8rem' }}>Skill Gaps</p>
-                            <span className="stat-note" style={{ color: 'rgba(234, 243, 251, 0.7)', fontSize: '0.65rem' }}>Key areas to improve</span>
+                            <p className="stat-label" style={{ margin: 0, fontWeight: '700', fontSize: '0.75rem', color: '#556272' }}>Skill Gaps</p>
+                            <span className="stat-note" style={{ color: 'rgba(234, 243, 251, 0.5)', fontSize: '0.65rem' }}>Key areas to improve</span>
                         </article>
                     </section>
 

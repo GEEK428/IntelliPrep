@@ -2,7 +2,6 @@ import React, { useState } from "react"
 import { Link } from "react-router"
 import "../auth.form.scss"
 import { useAuth } from "../hooks/useAuth"
-import { ArrowLeftIcon, EmailIcon, SparkIcon } from "../components/AuthIcons"
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
@@ -47,29 +46,35 @@ const ForgotPassword = () => {
 
                 <section className="auth-panel">
                     <p className="back-link-row">
-                        <Link to="/login"><ArrowLeftIcon />Back to login</Link>
+                        <Link to="/login">
+                            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>arrow_back</span>
+                            Back to login
+                        </Link>
                     </p>
 
-                    <h2 className="panel-title"><SparkIcon />Reset Password</h2>
+                    <h2 className="panel-title">Reset Password</h2>
                     <p className="auth-subtitle">Use your email to receive reset instructions.</p>
 
                     <form onSubmit={handleSubmit}>
                         <div className="input-group">
                             <label htmlFor="email">
-                                <span className="label-with-icon"><EmailIcon />Email Address</span>
+                                EMAIL ADDRESS
                             </label>
-                            <input
-                                onChange={(e) => {
-                                    setEmail(e.target.value)
-                                }}
-                                type="email"
-                                id="email"
-                                name="email"
-                                placeholder="name@example.com"
-                                pattern="^[^\s@]+@[^\s@]+\.[^\s@]{2,}$"
-                                title="Use a valid email address like name@example.com"
-                                required
-                            />
+                            <div className="input-wrapper">
+                                <span className="material-symbols-outlined input-icon">mail</span>
+                                <input
+                                    onChange={(e) => {
+                                        setEmail(e.target.value)
+                                    }}
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    placeholder="name@example.com"
+                                    pattern="^[^\s@]+@[^\s@]+\.[^\s@]{2,}$"
+                                    title="Use a valid email address like name@example.com"
+                                    required
+                                />
+                            </div>
                         </div>
 
                         <button className="button primary-button login-btn" disabled={loading}>

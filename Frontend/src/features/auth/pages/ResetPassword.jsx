@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from "react-router"
 import "../auth.form.scss"
 import { useAuth } from "../hooks/useAuth"
 import { verifyResetToken } from "../services/auth.api"
-import { ArrowLeftIcon, LockIcon, SparkIcon } from "../components/AuthIcons"
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/
 
@@ -87,10 +86,13 @@ const ResetPassword = () => {
 
                 <section className="auth-panel">
                     <p className="back-link-row">
-                        <Link to="/login"><ArrowLeftIcon />Back to login</Link>
+                        <Link to="/login">
+                            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>arrow_back</span>
+                            Back to login
+                        </Link>
                     </p>
 
-                    <h2 className="panel-title"><SparkIcon />Reset Password</h2>
+                    <h2 className="panel-title">Reset Password</h2>
                     <p className="auth-subtitle">Enter a new password for your account.</p>
 
                     {isTokenValid === false && (
@@ -106,9 +108,10 @@ const ResetPassword = () => {
                         <form onSubmit={handleSubmit}>
                             <div className="input-group">
                                 <label htmlFor="password">
-                                    <span className="label-with-icon"><LockIcon />New Password</span>
+                                    NEW PASSWORD
                                 </label>
-                                <div className="password-field">
+                                <div className="input-wrapper">
+                                    <span className="material-symbols-outlined input-icon">lock</span>
                                     <input
                                         onChange={(e) => {
                                             setPassword(e.target.value)
@@ -125,7 +128,9 @@ const ResetPassword = () => {
                                         onClick={() => setShowPassword((v) => !v)}
                                         aria-label={showPassword ? "Hide password" : "Show password"}
                                     >
-                                        {showPassword ? "Hide" : "Show"}
+                                        <span className="material-symbols-outlined">
+                                            {showPassword ? "visibility_off" : "visibility"}
+                                        </span>
                                     </button>
                                 </div>
                             </div>

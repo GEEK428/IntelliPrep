@@ -3,7 +3,7 @@ import "../style/home.scss"
 import { useInterview } from '../hooks/useInterview.js'
 import { useNavigate } from 'react-router'
 import Sidebar from '../components/Sidebar'
-import NotificationBell from '../components/NotificationBell'
+import TopBar from '../components/TopBar'
 import Loader from '../../../components/Loader'
 
 const Home = () => {
@@ -67,83 +67,91 @@ const Home = () => {
             <Sidebar />
             
             <section className="dashboard-main">
-                <header className="dashboard-header">
-                    <div>
-                        <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '1.8rem', color: '#9fd0f4' }}>troubleshoot</span>
-                            Resume Analysis
-                        </h1>
-                        <p className="dashboard-subtitle">Upload your resume or enter a self-description along with the target job listing to generate a personalized interview strategy.</p>
-                    </div>
-                    <NotificationBell />
-                </header>
+                <TopBar />
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+                <div className="home-content-container">
+                    <div className="page-header">
+                        <p className="kicker">CORE ANALYSIS</p>
+                        <h1>Create Your Custom Interview Strategy</h1>
+                        <p className="subtitle">Our Digital Curator syncs your career narrative with specific job mandates to generate a tailored preparation path.</p>
+                    </div>
+
                     <article className="analysis-builder">
-                        <div className="panel-heading">
-                            <h2>Create Your Custom Interview Strategy</h2>
-                        </div>
-                        
                         <div className="analysis-builder__main">
-                            <div className="input-card">
-                                <h2>Target Job Description</h2>
-                                <p className="input-card__hint">Paste the full job description here</p>
+                            
+                            <div className="input-card left-box">
+                                <div className="card-header">
+                                    <span className="material-symbols-outlined box-icon">description</span>
+                                    <h2>Target Job Description</h2>
+                                    <span className="material-symbols-outlined float-icon">work</span>
+                                </div>
                                 <textarea
                                     className="job-description"
                                     onChange={(e) => setJobDescription(e.target.value)}
-                                    placeholder="e.g. 'Senior Frontend Engineer at Google requires proficiency in React, TypeScript, and large-scale system design...'"
+                                    placeholder="Paste the full job description here... Our system will extract key requirements, cultural markers, and technical stacks."
                                     value={jobDescription}
                                 />
+                                <div className="input-footer">
+                                    <span>Extracting: Key Skills, Years of Exp, Culture Fit</span>
+                                    <span>Min 100 characters recommended</span>
+                                </div>
                             </div>
                             
-                            <div className="input-card">
-                                <h2>Your Profile Background</h2>
-                                <p className="input-card__hint">Either upload resume or use self description</p>
+                            <div className="input-card right-box">
+                                <div className="card-header">
+                                    <span className="material-symbols-outlined box-icon">attachment</span>
+                                    <h2>Your Profile</h2>
+                                </div>
                                 
-                                <label className="file-field">
-                                    <span style={{ fontSize: "16px", marginRight: "6px" }}>📄</span>
-                                    Select Resume
+                                <label className="upload-box">
+                                    <span className="material-symbols-outlined">cloud_upload</span>
+                                    <strong>Upload Master Resume</strong>
+                                    <span>PDF, DOCX up to 10MB</span>
                                     <input 
                                         ref={resumeInputRef} 
                                         type='file' 
                                         accept='.pdf,.docx'
                                         onChange={(e) => setSelectedFile(e.target.files?.[0]?.name || "")}
+                                        style={{ display: 'none' }}
                                     />
                                 </label>
-                                {selectedFile && <div className="file-name">{selectedFile}</div>}
-                                {selectedFile && <button className="file-remove-btn" onClick={clearSelectedResume} type="button">Remove</button>}
+                                {selectedFile && <div className="file-name">{selectedFile} <button onClick={clearSelectedResume}>✕</button></div>}
                                 
-                                <div style={{ marginTop: "1rem" }}>
-                                    <h2 style={{ fontSize: "0.86rem", color: "rgba(194, 214, 233, 0.7)" }}>OR Quick Self-Description</h2>
+                                <div className="self-desc-section" style={{marginTop: '1rem'}}>
+                                    <h3 className="section-label">
+                                        <span className="material-symbols-outlined" style={{color: '#ffb454', fontSize: '1rem'}}>edit_note</span>
+                                        QUICK SELF-DESCRIPTION
+                                    </h3>
+                                    <p className="hint">Add nuance not in your resume... (e.g., career pivots, specific achievements)</p>
                                     <textarea
                                         onChange={(e) => setSelfDescription(e.target.value)}
                                         value={selfDescription}
-                                        placeholder="Briefly describe your experience, key skills, and years of experience if you don't have a resume handy..."
-                                        style={{ minHeight: "65px", marginTop: "0.4rem" }}
+                                        placeholder=""
                                     />
                                 </div>
                             </div>
+
                         </div>
                         
                         <div className="analysis-builder__footer">
-                            <div>
-                                {error && <p className="builder-error">{error}</p>}
-                            </div>
-                                <button
-                                    onClick={handleGenerateReport}
-                                    className="generate-btn"
-                                    disabled={loading}
-                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem' }}
-                                >
-                                    <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>auto_awesome</span>
-                                    Analyze
-                                </button>
+                            {error && <p className="builder-error">{error}</p>}
+                            <button
+                                onClick={handleGenerateReport}
+                                className="generate-btn hero-btn"
+                                disabled={loading}
+                            >
+                                Analyze & Generate Strategy <span className="material-symbols-outlined">bolt</span>
+                            </button>
                         </div>
                     </article>
                     
-                    <article className="reports-panel">
+                    <article className="recent-plans-panel">
                         <div className="panel-heading">
-                            <h2>My Recent Plans</h2>
+                            <div>
+                                <h2>My Recent Plans</h2>
+                                <p>Review and update your generated prep strategies</p>
+                            </div>
+                            <button className="view-all-btn" onClick={() => setShowPlansModal(true)}>VIEW ALL HISTORIES</button>
                         </div>
                         
                         {reports.length === 0 ? (
@@ -153,22 +161,33 @@ const Home = () => {
                             </div>
                         ) : (
                             <>
-                                <ul className="report-list">
-                                    {reports.slice(0, 4).map(report => (
-                                        <li key={report._id} className="report-item">
-                                            <div className="report-meta">
-                                                <h3>{report.title || 'Untitled Position'}</h3>
-                                                <p>{new Date(report.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                                <ul className="recent-plans-list">
+                                    {reports.slice(0, 4).map(report => {
+                                        const dateLabel = new Date(report.createdAt).toLocaleDateString();
+                                        return (
+                                        <li key={report._id} className="plan-item">
+                                            <div className="plan-icon">
+                                                <img src="/mind-icon.svg" alt="icon" style={{width: 20}} />
                                             </div>
-                                            <p className="report-score">{report.matchScore ? report.matchScore + "% Match" : "Ready"}</p>
-                                            <button 
-                                                className="download-btn"
-                                                onClick={() => navigate(`/interview/${report._id}`)}
-                                            >
-                                                View Plan
-                                            </button>
+                                            <div className="plan-meta">
+                                                <div className="plan-title-row">
+                                                    <h3>{report.title || 'Untitled Position'}</h3>
+                                                    {report.matchScore && <span className="match-badge">{report.matchScore}% MATCH</span>}
+                                                </div>
+                                                <p className="plan-subtitle">Target Role • {dateLabel}</p>
+                                            </div>
+                                            <div className="readiness-col">
+                                                <span className="readiness-label">READINESS</span>
+                                                <div className="readiness-bar">
+                                                    <div className="bar-fill" style={{width: `${report.matchScore || 50}%`}}></div>
+                                                </div>
+                                            </div>
+                                            <div className="plan-actions">
+                                                <button onClick={() => navigate(`/interview/${report._id}`)}><span className="material-symbols-outlined">visibility</span></button>
+                                                <button><span className="material-symbols-outlined">ios_share</span></button>
+                                            </div>
                                         </li>
-                                    ))}
+                                    )})}
                                 </ul>
                                 {reports.length > 4 && (
                                     <button 
