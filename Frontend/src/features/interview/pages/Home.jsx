@@ -68,12 +68,11 @@ const Home = () => {
             
             <section className="dashboard-main">
                 <TopBar />
-                
+
                 <div className="home-content-container">
-                    <div className="page-header">
+                    <div className="page-header" style={{ marginBottom: '1.2rem' }}>
                         <p className="kicker">CORE ANALYSIS</p>
-                        <h1>Create Your Custom Interview Strategy</h1>
-                        <p className="subtitle">Our Digital Curator syncs your career narrative with specific job mandates to generate a tailored preparation path.</p>
+                        <p className="subtitle">Sync your career narrative with specific job mandates to generate a tailored preparation path.</p>
                     </div>
 
                     <article className="analysis-builder">

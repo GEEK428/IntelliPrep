@@ -153,12 +153,8 @@ const ResumeBuilder = () => {
 
             <section className="dashboard-main resume-builder-main">
                 <TopBar />
-                <div className="page-header" style={{ marginBottom: '1.5rem', marginTop: '1rem' }}>
-                    <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '1.8rem' }}>
-                        <span className="material-symbols-outlined">edit_document</span>
-                        Resume Builder
-                    </h1>
-                    <p className="subtitle">Provide your resume or self-description with a job listing to generate a tailored, optimized resume PDF.</p>
+                <div className="page-header" style={{ marginBottom: '1rem' }}>
+                    <p className="subtitle">Upload your resume + job listing to generate a tailored, one-page PDF.</p>
                 </div>
 
                 <section className="builder-grid">

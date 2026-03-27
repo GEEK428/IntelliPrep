@@ -31,8 +31,8 @@ async function extractResumeTextFromUpload(file) {
     const isDoc  = mimeType === "application/msword" || extension === ".doc"
 
     if (isPdf) {
-        const resumeContent = await (new pdfParse.PDFParse(Uint8Array.from(file.buffer))).getText()
-        return (resumeContent.text || "").trim()
+        const data = await pdfParse(file.buffer)
+        return (data.text || "").trim()
     }
 
     if (isDocx) {

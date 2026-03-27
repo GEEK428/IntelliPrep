@@ -90,12 +90,8 @@ const Dashboard = () => {
 
             <section className="dashboard-main" style={{ gap: '0.6rem' }}>
                 <TopBar />
-                <div className="page-header" style={{ marginBottom: '1rem', marginTop: '1rem' }}>
+                <div className="page-header" style={{ marginBottom: '0.8rem', marginTop: '0.8rem' }}>
                     <p className="kicker">WELCOME BACK, <span style={{color:"#eaf2f8", textTransform: 'none', fontWeight: 'bold'}}>{user?.fullName || user?.username || ''}</span></p>
-                    <h1 style={{fontSize: '1.2rem', marginTop: '0.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: '#9fd0f4' }}>dashboard</span>
-                        The Intelligence Dashboard
-                    </h1>
                 </div>
 
                 {/* ── High Level Stats Grid ── */}

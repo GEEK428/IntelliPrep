@@ -400,13 +400,6 @@ const Notes = () => {
 
             <section className="dashboard-main notes-main">
                 <TopBar />
-                <div className="page-header" style={{ marginBottom: '1.5rem', marginTop: '1rem' }}>
-                    <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '1.8rem' }}>
-                        <span className="material-symbols-outlined">menu_book</span>
-                        Notes / Prep Space
-                    </h1>
-                    <p className="subtitle">Create, organize, and review interview questions with answers.</p>
-                </div>
 
                 <div className="notes-search-row">
                     <div className="notes-search-wrap">

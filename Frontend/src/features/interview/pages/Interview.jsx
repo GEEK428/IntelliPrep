@@ -53,12 +53,12 @@ const Interview = () => {
 
             <section className="dashboard-main interview-main">
                 <TopBar />
-                <div className="page-header" style={{ marginBottom: '1.5rem', marginTop: '1rem' }}>
-                    <h1 style={{ fontSize: '1.4rem', margin: 0, marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '1.6rem', color: '#9fd0f4' }}>analytics</span>
+                <div className="page-header" style={{ marginBottom: '1rem' }}>
+                    <p className="kicker" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: '#9fd0f4' }}>analytics</span>
                         {safeReport.title}
-                    </h1>
-                    <p className="subtitle" style={{ maxWidth: '600px', lineHeight: '1.4', fontSize: '0.8rem' }}>Your detailed match report with strengths, skill gaps, practice questions, and a preparation roadmap.</p>
+                    </p>
+                    <p className="subtitle">Your match report with strengths, skill gaps, questions, and a preparation roadmap.</p>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>

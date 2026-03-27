@@ -265,12 +265,8 @@ const Settings = () => {
 
             <section className="dashboard-main settings-main">
                 <TopBar />
-                <div className="page-header" style={{ marginBottom: '1.5rem', marginTop: '1rem' }}>
-                    <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '1.8rem' }}>
-                        <span className="material-symbols-outlined">settings</span>
-                        Settings
-                    </h1>
-                    <p className="subtitle">Update your profile details, change password, or manage your account.</p>
+                <div className="page-header" style={{ marginBottom: '1rem' }}>
+                    <p className="subtitle">Update your profile, change password, or manage your account.</p>
                 </div>
 
                 <section className="settings-grid">

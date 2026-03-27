@@ -88,12 +88,13 @@ const Sidebar = () => {
                     ))}
                 </nav>
 
-                <div className="sidebar-footer" style={{ marginTop: 'auto', marginBottom: '2rem' }}>
+                {/* Logout — small gap below last nav item */}
+                <div style={{ marginTop: '0.4rem', paddingTop: '0.4rem', borderTop: '1px solid rgba(144,173,198,0.1)' }}>
                     <button
                         className="logout-btn"
                         onClick={onLogout}
                         type="button"
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', justifyContent: 'center' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', justifyContent: 'center', width: '100%' }}
                     >
                         <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>logout</span>
                         Logout
@@ -105,3 +106,4 @@ const Sidebar = () => {
 }
 
 export default Sidebar
+
