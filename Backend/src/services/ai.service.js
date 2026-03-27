@@ -7,11 +7,7 @@ const ai = new GoogleGenAI({
     apiKey: process.env.GOOGLE_GENAI_API_KEY
 })
 
-const DEFAULT_MODEL_CANDIDATES = [
-    process.env.GOOGLE_GENAI_MODEL,
-    "gemini-2.5-flash",
-    "gemini-2.0-flash"
-].filter(Boolean)
+const RESUME_AI_MODEL = "gemini-3-flash-preview"
 
 function extractResponseText(response) {
     if (!response) return ""
@@ -55,29 +51,18 @@ async function generateStructuredJson({ prompt, schema }) {
     if (!process.env.GOOGLE_GENAI_API_KEY) {
         throw new Error("GOOGLE_GENAI_API_KEY is missing.")
     }
-
-    let lastError = null
-
-    for (const model of DEFAULT_MODEL_CANDIDATES) {
-        try {
-            const response = await ai.models.generateContent({
-                model,
-                contents: prompt,
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: zodToJsonSchema(schema),
-                }
-            })
-
-            const rawText = extractResponseText(response)
-            const parsed = safeParseJson(rawText)
-            return schema.parse(parsed)
-        } catch (err) {
-            lastError = err
+    const response = await ai.models.generateContent({
+        model: RESUME_AI_MODEL,
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: zodToJsonSchema(schema),
         }
-    }
+    })
 
-    throw lastError || new Error("Unable to generate AI response.")
+    const rawText = extractResponseText(response)
+    const parsed = safeParseJson(rawText)
+    return schema.parse(parsed)
 }
 
 
@@ -335,7 +320,12 @@ RULES:
 2. For projects: add a realistic quantified metric to the description if one can be reasonably inferred (e.g. "built for 200+ users", "reduced API calls by ~30%"). Do NOT fabricate specific numbers not implied by the text.
 3. For experience bullet points: make them achievement-focused and concise.
 4. In missingJobSkills: list ONLY skills the job description explicitly requires that are NOT already in the candidate's skills. Max 6. Keep them concise (e.g. "Docker", "GraphQL").
-5. Keep all text tight and concise — this must fit on one A4 page.`
+5. Keep all text tight and concise — this must fit on one A4 page.
+6. Prefer strong action verbs and outcomes ("built", "optimized", "reduced", "improved") over generic wording.
+7. Prioritize ATS-friendly phrasing and explicit technical nouns from the job description.
+8. Order sections and bullets by impact and relevance to the target role.
+9. Keep project descriptions to exactly 1-2 lines each and avoid fluff.
+10. Ensure the final resume feels polished, recruiter-friendly, and immediately skimmable.`
 
     const data = await generateStructuredJson({
         prompt,

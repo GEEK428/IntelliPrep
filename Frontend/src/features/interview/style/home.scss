@@ -1133,9 +1133,9 @@
 }
 
 .stat-card {
-    background: linear-gradient(145deg, rgba(42, 63, 84, 0.35), rgba(18, 29, 40, 0.9));
-    border: 1px solid rgba(146, 173, 196, 0.2);
-    border-radius: 0.9rem;
+    background: #090e15;
+    border: 1px solid rgba(255, 255, 255, 0.035);
+    border-radius: 1rem;
     padding: 0.8rem 0.9rem;
 
     h3 {
@@ -1159,9 +1159,9 @@
 }
 
 .reports-panel {
-    background: linear-gradient(145deg, rgba(34, 53, 71, 0.35), rgba(14, 23, 32, 0.9));
-    border: 1px solid rgba(146, 173, 196, 0.2);
-    border-radius: 0.9rem;
+    background: #090e15;
+    border: 1px solid rgba(255, 255, 255, 0.035);
+    border-radius: 1rem;
     padding: 0.95rem;
 }
 
@@ -1221,9 +1221,9 @@
     align-items: center;
     gap: 0.8rem;
     padding: 0.7rem;
-    border-radius: 0.7rem;
-    border: 1px solid rgba(146, 173, 196, 0.2);
-    background: rgba(88, 121, 151, 0.12);
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.035);
+    background: rgba(12, 24, 36, 0.72);
 }
 
 .report-meta {
@@ -1257,9 +1257,9 @@
 }
 
 .playcard-panel {
-    background: linear-gradient(145deg, rgba(34, 53, 71, 0.35), rgba(14, 23, 32, 0.9));
-    border: 1px solid rgba(146, 173, 196, 0.2);
-    border-radius: 0.9rem;
+    background: #090e15;
+    border: 1px solid rgba(255, 255, 255, 0.035);
+    border-radius: 1rem;
     padding: 0.95rem;
 
     h2 {
@@ -1274,9 +1274,9 @@
 }
 
 .playcard {
-    border: 1px solid rgba(143, 180, 210, 0.24);
-    background: rgba(88, 121, 151, 0.12);
-    border-radius: 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.035);
+    background: rgba(12, 24, 36, 0.72);
+    border-radius: 0.75rem;
     padding: 0.62rem;
 
     p {
@@ -1871,4 +1871,41 @@
     /* Builder: compact inputs */
     .builder-inputs textarea { min-height: 80px; font-size: 0.77rem; }
     .upload-drop button { font-size: 0.75rem; padding: 0.4rem 0.8rem; }
+}
+
+/* Dashboard card hover responsiveness */
+.dashboard-main .stat-card,
+.dashboard-main .reports-panel,
+.dashboard-main .playcard-panel,
+.dashboard-main .report-item,
+.dashboard-main .history-more-btn {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.dashboard-main .stat-card:hover,
+.dashboard-main .reports-panel:hover,
+.dashboard-main .playcard-panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-main .report-item:hover {
+    transform: translateX(2px);
+    background: rgba(17, 29, 41, 0.55) !important;
+}
+
+.dashboard-main .history-more-btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(146, 173, 196, 0.28) !important;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.18);
+}
+
+@media (max-width: 850px) {
+    .dashboard-main .stat-card:hover,
+    .dashboard-main .reports-panel:hover,
+    .dashboard-main .playcard-panel:hover,
+    .dashboard-main .report-item:hover,
+    .dashboard-main .history-more-btn:hover {
+        transform: none;
+    }
 }

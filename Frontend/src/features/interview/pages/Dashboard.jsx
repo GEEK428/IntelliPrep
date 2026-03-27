@@ -139,7 +139,7 @@ const Dashboard = () => {
                     </article>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        <article className="stat-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0.6rem 0.8rem', background: 'rgba(20, 32, 45, 0.6)' }}>
+                        <article className="stat-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0.6rem 0.8rem' }}>
                             <p className="stat-label" style={{fontSize: '0.55rem', marginBottom: '0.2rem'}}>TARGET ROLE</p>
                             <h3 style={{ fontSize: '0.85rem', lineHeight: '1.2', margin: 0, fontWeight: '600', color: '#eaf2f8', whiteSpace: 'normal', wordBreak: 'break-word' }}>{targetTitle || "None"}</h3>
                             <p style={{ fontSize: '0.65rem', lineHeight: '1.2', color: 'rgba(194, 214, 233, 0.7)', margin: '0.1rem 0 0', whiteSpace: 'normal', wordBreak: 'break-word' }}>{targetCompany || "Company not specified"}</p>
@@ -237,7 +237,7 @@ const Dashboard = () => {
                                     const icons = ["fact_check", "description", "history", "analytics"]
                                     const iconName = icons[idx % icons.length]
                                     return (
-                                        <div key={report._id} className="report-item" onClick={() => navigate(`/interview/${report._id}`)} style={{ cursor: 'pointer', padding: '0.5rem 0.2rem', background: 'transparent', border: 'none', borderBottom: idx < 3 ? '1px solid rgba(146, 173, 196, 0.08)' : 'none', borderRadius: 0, gridTemplateColumns: 'auto 1fr', gap: '0.6rem' }}>
+                                        <div key={report._id} className="report-item" onClick={() => navigate(`/interview/${report._id}`)} style={{ cursor: 'pointer', padding: '0.5rem 0.4rem', borderBottom: idx < 3 ? '1px solid rgba(146, 173, 196, 0.08)' : 'none', gridTemplateColumns: 'auto 1fr', gap: '0.6rem' }}>
                                             <div style={{ width: '1.6rem', height: '1.6rem', borderRadius: '4px', background: 'rgba(255,255,255,0.06)', display: 'grid', placeItems: 'center' }}>
                                                 <span className="material-symbols-outlined" style={{ fontSize: '0.9rem', color: 'rgba(194, 214, 233, 0.8)' }}>{iconName}</span>
                                             </div>

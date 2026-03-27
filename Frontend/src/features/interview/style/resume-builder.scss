@@ -220,12 +220,12 @@
     border: 1px solid rgba(146, 173, 196, 0.2);
     border-radius: 0.7rem;
     background: rgba(12, 24, 36, 0.7);
-    min-height: 540px;
+    min-height: 620px;
     overflow: hidden;
 
     .preview-pdf-frame {
         width: 100%;
-        height: 540px;
+        height: 620px;
         border: 0;
         background: #fff;
         display: block;
@@ -233,7 +233,7 @@
 }
 
 .preview-placeholder {
-    min-height: 540px;
+    min-height: 620px;
     display: grid;
     place-items: center;
     color: rgba(194, 214, 233, 0.72);
@@ -268,8 +268,8 @@
     .preview-body,
     .preview-placeholder,
     .preview-body .preview-pdf-frame {
-        min-height: 420px;
-        height: 420px;
+        min-height: 500px;
+        height: 500px;
     }
 }
 
@@ -277,8 +277,8 @@
     .preview-body,
     .preview-placeholder,
     .preview-body .preview-pdf-frame {
-        min-height: 300px;
-        height: 300px;
+        min-height: 380px;
+        height: 380px;
     }
 
     .upload-drop {
