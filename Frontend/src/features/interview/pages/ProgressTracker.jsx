@@ -259,6 +259,16 @@ const ProgressTracker = () => {
         return years
     }, [ currentYear ])
 
+    const [goalsModalPage, setGoalsModalPage] = useState(1);
+    const [topicsModalPage, setTopicsModalPage] = useState(1);
+    const PROGRESS_MODAL_SIZE = 6;
+
+    const paginatedVisibleGoals = visibleGoalTasks.slice((goalsModalPage - 1) * PROGRESS_MODAL_SIZE, goalsModalPage * PROGRESS_MODAL_SIZE);
+    const totalGoalsModalPages = Math.ceil(visibleGoalTasks.length / PROGRESS_MODAL_SIZE);
+
+    const paginatedCompletedGoals = completedGoals.slice((topicsModalPage - 1) * PROGRESS_MODAL_SIZE, topicsModalPage * PROGRESS_MODAL_SIZE);
+    const totalTopicsModalPages = Math.ceil(completedGoals.length / PROGRESS_MODAL_SIZE);
+
     return (
         <main className="dashboard-page">
             <Sidebar />
@@ -528,13 +538,13 @@ const ProgressTracker = () => {
 
             {showAllGoals && (
                 <section className="history-modal-overlay" onClick={() => setShowAllGoals(false)}>
-                    <article className="history-modal goals-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="history-modal__head">
+                    <article className="history-modal goals-modal" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', maxHeight: '85vh' }}>
+                        <div className="history-modal__head" style={{ flexShrink: 0 }}>
                             <h3>All Goals</h3>
                             <button type="button" onClick={() => setShowAllGoals(false)}>Close</button>
                         </div>
-                        <div className="history-modal__list">
-                            {visibleGoalTasks.map((goal) => {
+                        <div className="history-modal__list" style={{ flex: 1, overflowY: 'auto', paddingRight: '0.4rem' }}>
+                            {paginatedVisibleGoals.map((goal) => {
                                 const total = Math.max(1, Number(goal.targetValue || 1))
                                 const current = Number(goal.currentProgress || 0)
                                 const marker = goal.status === "completed" ? "completed" : "ongoing"
@@ -588,26 +598,40 @@ const ProgressTracker = () => {
                                 )
                             })}
                         </div>
+                        {totalGoalsModalPages > 1 && (
+                            <div className="modal-pagination" style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.8rem', flexShrink: 0 }}>
+                                <button disabled={goalsModalPage <= 1} onClick={() => setGoalsModalPage(p => p - 1)}>Prev</button>
+                                <span>{goalsModalPage} / {totalGoalsModalPages}</span>
+                                <button disabled={goalsModalPage >= totalGoalsModalPages} onClick={() => setGoalsModalPage(p => p + 1)}>Next</button>
+                            </div>
+                        )}
                     </article>
                 </section>
             )}
 
             {showAllCompletedTopics && (
                 <section className="history-modal-overlay" onClick={() => setShowAllCompletedTopics(false)}>
-                    <article className="history-modal goals-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="history-modal__head">
+                    <article className="history-modal goals-modal" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', maxHeight: '85vh' }}>
+                        <div className="history-modal__head" style={{ flexShrink: 0 }}>
                             <h3>Completed Topics</h3>
                             <button type="button" onClick={() => setShowAllCompletedTopics(false)}>Close</button>
                         </div>
-                        <div className="history-modal__list">
+                        <div className="history-modal__list" style={{ flex: 1, overflowY: 'auto', paddingRight: '0.4rem' }}>
                             {!completedGoals.length && <p className="notes-meta">No completed topics yet.</p>}
-                            {completedGoals.map((goal) => (
+                            {paginatedCompletedGoals.map((goal) => (
                                 <article key={`done-${goal._id}`} className="topic-item topic-item--modal">
                                     <strong>{goal.skill}</strong>
                                     <small>{new Date(goal.completedAt).toLocaleString()}</small>
                                 </article>
                             ))}
                         </div>
+                        {totalTopicsModalPages > 1 && (
+                            <div className="modal-pagination" style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.8rem', flexShrink: 0 }}>
+                                <button disabled={topicsModalPage <= 1} onClick={() => setTopicsModalPage(p => p - 1)}>Prev</button>
+                                <span>{topicsModalPage} / {totalTopicsModalPages}</span>
+                                <button disabled={topicsModalPage >= totalTopicsModalPages} onClick={() => setTopicsModalPage(p => p + 1)}>Next</button>
+                            </div>
+                        )}
                     </article>
                 </section>
             )}

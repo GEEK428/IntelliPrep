@@ -9,7 +9,7 @@ const ai = new GoogleGenAI({
     apiKey: process.env.GOOGLE_GENAI_API_KEY
 })
 
-const RESUME_AI_MODEL = "gemini-3-flash"
+const RESUME_AI_MODEL = "gemini-3-flash-preview"
 
 function generateCacheKey(prefix, data) {
     const hash = crypto.createHash("md5").update(JSON.stringify(data)).digest("hex")
@@ -42,38 +42,46 @@ function safeParseJson(rawText = "") {
 }
 
 async function generateStructuredJson({ prompt, schema, cachePrefix = null, cacheData = null }) {
-    // 1. Check Redis Cache first
-    let cacheKey = null
-    if (cachePrefix && cacheData) {
-        cacheKey = generateCacheKey(cachePrefix, cacheData)
-        const cached = await getCache(cacheKey)
-        if (cached) {
-            console.log(`[AI-Cache] HIT: ${cacheKey}`)
-            return cached
+    try {
+        // 1. Check Redis Cache first
+        let cacheKey = null
+        if (cachePrefix && cacheData) {
+            cacheKey = generateCacheKey(cachePrefix, cacheData)
+            const cached = await getCache(cacheKey)
+            if (cached) {
+                console.log(`[AI-Cache] HIT: ${cacheKey}`)
+                return cached
+            }
         }
-    }
 
-    if (!process.env.GOOGLE_GENAI_API_KEY) throw new Error("GOOGLE_GENAI_API_KEY is missing.")
-    
-    console.log(`[AI-Cache] MISS: Calling Gemini for prompt...`)
-    const response = await ai.getGenerativeModel({ model: RESUME_AI_MODEL }).generateContent({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: zodToJsonSchema(schema),
+        if (!process.env.GOOGLE_GENAI_API_KEY) throw new Error("GOOGLE_GENAI_API_KEY is missing.")
+        
+        console.log(`[AI-Service] MISS for ${RESUME_AI_MODEL}. Generating...`)
+        const model = ai.getGenerativeModel({ model: RESUME_AI_MODEL })
+        const response = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: zodToJsonSchema(schema),
+            }
+        })
+        
+        const rawText = extractResponseText(response.response)
+        if (!rawText) throw new Error("Empty response from AI model")
+
+        const parsed = safeParseJson(rawText)
+        const validated = schema.parse(parsed)
+
+        // 2. Save to Redis for future hits
+        if (cacheKey) {
+            await setCache(cacheKey, validated, 43200) // Cache for 12 hours
         }
-    })
-    
-    const rawText = extractResponseText(response.response)
-    const parsed = safeParseJson(rawText)
-    const validated = schema.parse(parsed)
 
-    // 2. Save to Redis for future hits
-    if (cacheKey) {
-        await setCache(cacheKey, validated, 43200) // Cache for 12 hours
+        return validated
+    } catch (error) {
+        console.error(`[AI-Service-Error] ${error.message}`, error)
+        throw error
     }
-
-    return validated
 }
 
 const interviewReportSchema = z.object({

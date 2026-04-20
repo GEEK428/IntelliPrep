@@ -66,6 +66,11 @@ const ResumeAnalysis = () => {
         )
     }
 
+    const [modalPage, setModalPage] = useState(1);
+    const MODAL_PAGE_SIZE = 10;
+    const paginatedReports = reports.slice((modalPage - 1) * MODAL_PAGE_SIZE, modalPage * MODAL_PAGE_SIZE);
+    const totalModalPages = Math.ceil(reports.length / MODAL_PAGE_SIZE);
+
     return (
         <main className="dashboard-page">
             <Sidebar />
@@ -215,15 +220,15 @@ const ResumeAnalysis = () => {
             
             {showPlansModal && (
                 <section className="history-modal-overlay" onClick={() => setShowPlansModal(false)}>
-                    <article className="history-modal" onClick={(e) => e.stopPropagation()} style={{ width: 'min(760px, 92vw)', maxHeight: '78vh', overflow: 'auto', border: '1px solid rgba(146, 173, 196, 0.24)', borderRadius: '0.85rem', background: 'linear-gradient(145deg, rgba(24, 40, 56, 0.96), rgba(10, 18, 27, 0.98))', padding: '1.2rem' }}>
-                        <div className="history-modal__head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
+                    <article className="history-modal" onClick={(e) => e.stopPropagation()} style={{ width: 'min(760px, 92vw)', maxHeight: '78vh', overflow: 'hidden', border: '1px solid rgba(146, 173, 196, 0.24)', borderRadius: '0.85rem', background: 'linear-gradient(145deg, rgba(24, 40, 56, 0.96), rgba(10, 18, 27, 0.98))', padding: '1.2rem', display: 'flex', flexDirection: 'column' }}>
+                        <div className="history-modal__head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', flexShrink: 0 }}>
                             <h3 style={{ margin: 0, fontSize: '1.1rem' }}>All Report Plans</h3>
                             <div className="history-modal__actions">
                                 <button type="button" onClick={() => setShowPlansModal(false)}>Close</button>
                             </div>
                         </div>
-                        <div className="history-modal__list" style={{ display: 'grid', gap: '0.6rem' }}>
-                            {reports.map(report => (
+                        <div className="history-modal__list" style={{ flex: 1, overflowY: 'auto', display: 'grid', gap: '0.6rem', paddingRight: '0.5rem' }}>
+                            {paginatedReports.map(report => (
                                 <div className="history-modal__item" key={report._id} style={{ border: '1px solid rgba(146, 173, 196, 0.22)', background: 'rgba(88, 121, 151, 0.1)', borderRadius: '0.55rem', padding: '0.62rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div>
                                         <strong style={{ fontSize: '0.86rem' }}>{report.title || 'Untitled Position'}</strong>
@@ -242,6 +247,13 @@ const ResumeAnalysis = () => {
                                 </div>
                             ))}
                         </div>
+                        {totalModalPages > 1 && (
+                            <div className="modal-pagination" style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
+                                <button disabled={modalPage <= 1} onClick={() => setModalPage(p => p - 1)} style={{ padding: '0.3rem 0.6rem', background: 'rgba(143, 180, 210, 0.1)', border: '1px solid rgba(143, 180, 210, 0.2)', borderRadius: '0.4rem', color: '#eaf3fb', opacity: modalPage <= 1 ? 0.5 : 1 }}>Prev</button>
+                                <span style={{ fontSize: '0.85rem' }}>Page {modalPage} of {totalModalPages}</span>
+                                <button disabled={modalPage >= totalModalPages} onClick={() => setModalPage(p => p + 1)} style={{ padding: '0.3rem 0.6rem', background: 'rgba(143, 180, 210, 0.1)', border: '1px solid rgba(143, 180, 210, 0.2)', borderRadius: '0.4rem', color: '#eaf3fb', opacity: modalPage >= totalModalPages ? 0.5 : 1 }}>Next</button>
+                            </div>
+                        )}
                     </article>
                 </section>
             )}

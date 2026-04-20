@@ -76,28 +76,23 @@ const Notes = () => {
     const activeNote = useMemo(() => notes.find((item) => item._id === activeId) || null, [ notes, activeId ])
     
     const stats = useMemo(() => {
-        // Stats represent the global picture, but since we have pagination, 
-        // we might prefer global stats from an overview API. 
-        // For now, we calculate from the current page's notes or state.
         const understood = notes.filter((item) => item.status === "done").length
         const total = totalCount || notes.length
         const successRate = total ? Math.round((understood / notes.length) * 100) : 0
         
-        const domainCounts = {}
+        let totalConfidence = 0
         notes.forEach(n => {
-            domainCounts[n.domain] = (domainCounts[n.domain] || { total: 0, done: 0 })
-            domainCounts[n.domain].total++
-            if (n.status === "done") domainCounts[n.domain].done++
+            totalConfidence += (n.confidence || 0)
         })
-        const mastered = Object.values(domainCounts).filter(d => d.total > 0 && d.done === d.total).length
+        const avgConfidence = notes.length > 0 ? (totalConfidence / notes.length).toFixed(1) : "0.0"
 
-        return { understood, successRate, total, mastered }
+        return { understood, successRate, total, avgConfidence }
     }, [ notes, totalCount ])
 
     const pieChartStyle = useMemo(() => {
         const total = Math.max(1, notes.length)
         const understood = notes.filter(n => n.status === "done").length
-        return { background: `conic-gradient(#00cfb1 0deg ${(understood / total) * 360}deg, #151d28 ${(understood / total) * 360}deg 360deg)` }
+        return { background: `conic-gradient(#6fb2e3 0deg ${(understood / total) * 360}deg, rgba(255,255,255,0.05) ${(understood / total) * 360}deg 360deg)` }
     }, [ notes ])
 
     const loadNotes = async (p = page) => {
@@ -251,26 +246,20 @@ const Notes = () => {
                 <header className="notes-optimized-header compact-view">
                     <div className="velocity-card card-glass small-card">
                         <div className="velocity-header">
-                            <p>PREPARATION SCORE</p>
+                            <p>AVG CONFIDENCE</p>
                             <div className="velocity-main">
-                                <h1>{stats.successRate}%</h1>
-                                <span className="velocity-meta">Score on current page</span>
+                                <h1>{stats.avgConfidence}<span style={{fontSize:'0.9rem', color: '#6fb2e3'}}>/5</span></h1>
+                                <span className="velocity-meta">Prep Quality</span>
                             </div>
                         </div>
-                        <div className="velocity-pie-wrap">
+                        <div className="velocity-pie-wrap" title={`${stats.understood} understood out of ${stats.total}`}>
                             <div className="velocity-pie small-pie" style={pieChartStyle}>
                                 <div className="velocity-pie-inner">
-                                    <p>TOTAL</p>
-                                    <strong>{stats.total}</strong>
+                                    <p>UNDERSTOOD</p>
+                                    <strong>{stats.understood}/{stats.total}</strong>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div className="streak-card card-glass small-card">
-                        <span className="material-symbols-outlined streak-icon small-icon">workspace_premium</span>
-                        <p>MASTERED</p>
-                        <h1>{stats.mastered}</h1>
                     </div>
                 </header>
 
