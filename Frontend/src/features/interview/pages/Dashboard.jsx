@@ -82,7 +82,7 @@ const Dashboard = () => {
     const prepMastery = totalNotes > 0 ? Math.round((understoodCount / totalNotes) * 100) : 0
 
     const now = Date.now()
-    const activeGoals = goalsData.filter(g => g.status !== "completed" && new Date(g.deadline).getTime() >= now).length
+    const activeGoals = (goalsData || []).filter(g => g.status !== "completed" && new Date(g.deadline || 0).getTime() >= now).length
 
     return (
         <main className="dashboard-page">

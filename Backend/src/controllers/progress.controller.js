@@ -335,10 +335,12 @@ async function buildStatsPayload(userId, yearInput) {
     const now = new Date()
     const weekStart = startOfWeekMonday(now)
     const selectedYear = Number.isFinite(Number(yearInput)) ? Number(yearInput) : now.getFullYear()
+    
+    // Safety check for profile to avoid iterations on non-iterables
     const profile = await ensureProfile(userId)
     const [ goals, roadmap ] = await Promise.all([
-        goalModel.find({ user: userId }).sort({ createdAt: -1 }),
-        roadmapModel.findOne({ user: userId, weekStartDate: weekStart })
+        goalModel.find({ user: userId }).sort({ createdAt: -1 }).lean(),
+        roadmapModel.findOne({ user: userId, weekStartDate: weekStart }).lean()
     ])
 
     const yearStart = new Date(selectedYear, 0, 1)
@@ -347,7 +349,7 @@ async function buildStatsPayload(userId, yearInput) {
     const logs = await progressLogModel.find({
         user: userId,
         date: { $gte: yearStart, $lte: yearEnd }
-    }).sort({ date: 1 })
+    }).sort({ date: 1 }).lean()
 
     const goalProgress = buildGoalProgress(goals)
     const matchScoreHistory = logs
@@ -385,9 +387,12 @@ async function buildStatsPayload(userId, yearInput) {
         ? (currentMonthCompleted > 0 ? 100 : 0)
         : Math.round(((currentMonthCompleted - previousMonthCompleted) / previousMonthCompleted) * 100)
 
+    // Ensure we return a plain object for skills
+    const skills = profile.skills instanceof Map ? Object.fromEntries(profile.skills) : (profile.skills || {})
+
     return {
         year: selectedYear,
-        skills: Object.fromEntries(profile.skills || []),
+        skills,
         goalProgress,
         matchScoreHistory,
         heatmap,
@@ -408,61 +413,74 @@ async function buildStatsPayload(userId, yearInput) {
 }
 
 async function getStatsController(req, res) {
-    const stats = await buildStatsPayload(req.user.id, req.query?.year)
-    return res.status(200).json({
-        message: "Progress stats fetched.",
-        stats
-    })
+    try {
+        const stats = await buildStatsPayload(req.user.id, req.query?.year)
+        return res.status(200).json({
+            message: "Progress stats fetched.",
+            stats
+        })
+    } catch (err) {
+        console.error("[Stats] Controller Error:", err.message)
+        return res.status(500).json({ message: "Failed to fetch stats." })
+    }
 }
 
 async function getOverviewController(req, res) {
-    const weekStart = startOfWeekMonday(new Date())
-    const [ profile, goals, roadmap, latestReports ] = await Promise.all([
-        ensureProfile(req.user.id),
-        goalModel.find({ user: req.user.id }).sort({ createdAt: -1 }),
-        roadmapModel.findOne({ user: req.user.id, weekStartDate: weekStart }),
-        interviewReportModel.find({ user: req.user.id }).sort({ createdAt: -1 }).limit(12).select("skillGaps")
-    ])
-    const stats = await buildStatsPayload(req.user.id, req.query?.year)
-    const notifications = await notificationModel.find({ user: req.user.id }).sort({ createdAt: -1 }).limit(8)
+    try {
+        const weekStart = startOfWeekMonday(new Date())
+        const [ profile, goals, roadmap, latestReports ] = await Promise.all([
+            ensureProfile(req.user.id),
+            goalModel.find({ user: req.user.id }).sort({ createdAt: -1 }).lean(),
+            roadmapModel.findOne({ user: req.user.id, weekStartDate: weekStart }).lean(),
+            interviewReportModel.find({ user: req.user.id }).sort({ createdAt: -1 }).limit(12).select("skillGaps").lean()
+        ])
+        
+        const stats = await buildStatsPayload(req.user.id, req.query?.year)
+        const notifications = await notificationModel.find({ user: req.user.id }).sort({ createdAt: -1 }).limit(8).lean()
 
-    const collectedGaps = []
-    latestReports.forEach((report) => {
-        ;(report?.skillGaps || []).forEach((gap) => {
-            const skill = String(gap?.skill || "").trim()
-            if (skill) collectedGaps.push(skill)
+        const collectedGaps = []
+        latestReports.forEach((report) => {
+            ;(report?.skillGaps || []).forEach((gap) => {
+                const skill = String(gap?.skill || "").trim()
+                if (skill) collectedGaps.push(skill)
+            })
         })
-    })
-    if (!collectedGaps.length) {
-        Object.entries(Object.fromEntries(profile.skills || []))
-            .sort((a, b) => Number(a[1]) - Number(b[1]))
-            .slice(0, 7)
-            .forEach(([ skill ]) => collectedGaps.push(skill))
-    }
-    const skillGapSuggestions = [ ...new Set(collectedGaps) ].slice(0, 7)
+        
+        if (!collectedGaps.length) {
+            const skillsObj = profile.skills instanceof Map ? Object.fromEntries(profile.skills) : (profile.skills || {})
+            Object.entries(skillsObj)
+                .sort((a, b) => Number(a[1]) - Number(b[1]))
+                .slice(0, 7)
+                .forEach(([ skill ]) => collectedGaps.push(skill))
+        }
+        const skillGapSuggestions = [ ...new Set(collectedGaps) ].slice(0, 7)
 
-    return res.status(200).json({
-        message: "Progress overview fetched.",
-        profile: {
-            skills: Object.fromEntries(profile.skills || []),
-            currentStreak: profile.currentStreak || 0,
-            longestStreak: profile.longestStreak || 0
-        },
-        goals,
-        roadmap: roadmap || {
-            weekStartDate: weekStart,
-            days: normalizeDays([]),
-            reminderTime: "20:00",
-            reminderType: "in_app"
-        },
-        skillGapSuggestions,
-        notifications,
-        stats
-    })
+        return res.status(200).json({
+            message: "Progress overview fetched.",
+            profile: {
+                skills: profile.skills instanceof Map ? Object.fromEntries(profile.skills) : (profile.skills || {}),
+                currentStreak: profile.currentStreak || 0,
+                longestStreak: profile.longestStreak || 0
+            },
+            goals,
+            roadmap: roadmap || {
+                weekStartDate: weekStart,
+                days: normalizeDays([]),
+                reminderTime: "20:00",
+                reminderType: "in_app"
+            },
+            skillGapSuggestions,
+            notifications,
+            stats
+        })
+    } catch (err) {
+        console.error("[Overview] Controller Error:", err.message)
+        return res.status(500).json({ message: "Failed to fetch progress overview." })
+    }
 }
 
 async function getNotificationsController(req, res) {
-    const notifications = await notificationModel.find({ user: req.user.id }).sort({ createdAt: -1 }).limit(30)
+    const notifications = await notificationModel.find({ user: req.user.id }).sort({ createdAt: -1 }).limit(30).lean()
     const unreadCount = notifications.filter((item) => !item.readAt).length
 
     return res.status(200).json({
