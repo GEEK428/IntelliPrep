@@ -263,8 +263,8 @@ async function loginUserController(req, res) {
 
     res.cookie("token", token, {
         httpOnly: true,
-        secure: true,
-        sameSite: 'none',
+        secure: false, // Set to true only in production with HTTPS
+        sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000
     })
     res.status(200).json({
@@ -337,8 +337,8 @@ async function googleAuthController(req, res) {
 
     res.cookie("token", token, {
         httpOnly: true,
-        secure: true,
-        sameSite: 'none',
+        secure: false, // Set to true only in production with HTTPS
+        sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000
     })
     res.status(200).json({
@@ -364,8 +364,8 @@ async function logoutUserController(req, res) {
 
     res.clearCookie("token", {
         httpOnly: true,
-        secure: true,
-        sameSite: 'none'
+        secure: false,
+        sameSite: 'lax'
     })
 
     res.status(200).json({
@@ -525,8 +525,8 @@ async function changePasswordController(req, res) {
     }
     res.clearCookie("token", {
         httpOnly: true,
-        secure: true,
-        sameSite: 'none'
+        secure: false,
+        sameSite: 'lax'
     })
 
     return res.status(200).json({
@@ -573,8 +573,8 @@ async function deleteAccountController(req, res) {
     }
     res.clearCookie("token", {
         httpOnly: true,
-        secure: true,
-        sameSite: 'none'
+        secure: false,
+        sameSite: 'lax'
     })
 
     return res.status(200).json({
@@ -710,8 +710,8 @@ async function resetPasswordController(req, res) {
     }
     res.clearCookie("token", {
         httpOnly: true,
-        secure: true,
-        sameSite: 'none'
+        secure: false,
+        sameSite: 'lax'
     })
 
     return res.status(200).json({

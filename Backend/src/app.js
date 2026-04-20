@@ -41,6 +41,7 @@ app.use(cookieParser())
 const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:5174",
+    "http://40.81.231.38.nip.io:5173",
     process.env.FRONTEND_URL
 ].filter(Boolean)
 app.use(cors({
