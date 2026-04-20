@@ -53,7 +53,8 @@ export const updateSettings = async ({
     avatarDataUrl,
     experienceLevel,
     targetJob,
-    targetCompany
+    targetCompany,
+    timezone
 }) => {
     const response = await api.patch("/api/auth/settings", {
         fullName,
@@ -62,7 +63,8 @@ export const updateSettings = async ({
         avatarDataUrl,
         experienceLevel,
         targetJob,
-        targetCompany
+        targetCompany,
+        timezone
     });
     return response.data;
 };

@@ -48,6 +48,8 @@ const interviewReportSchema = new mongoose.Schema({
 
 }, { timestamps: true })
 
+interviewReportSchema.index({ user: 1, createdAt: -1 })
+
 const interviewReportModel = mongoose.model("InterviewReport", interviewReportSchema);
 
 module.exports = interviewReportModel;

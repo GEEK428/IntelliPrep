@@ -1,16 +1,31 @@
 require("dotenv").config()
+const http = require("http")
 const app = require("./src/app")
 const connectToDB = require("./src/config/database")
 const { startReminderScheduler } = require("./src/services/reminder.scheduler")
+const { initSocket } = require("./src/socket")
 
 const PORT = Number(process.env.PORT || 3000)
+const server = http.createServer(app)
+
+const REQUIRED_ENVS = ["MONGO_URI", "JWT_SECRET"];
 
 async function bootstrap() {
     try {
+        // Validate environment variables
+        const missing = REQUIRED_ENVS.filter(key => !process.env[key]);
+        if (missing.length > 0) {
+            throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
+        }
+
         await connectToDB()
+        
+        // Initialize Socket.io
+        initSocket(server)
+        
         startReminderScheduler()
 
-        app.listen(PORT, () => {
+        server.listen(PORT, () => {
             console.log(`Server is running on port ${PORT}`)
         })
     } catch (error) {

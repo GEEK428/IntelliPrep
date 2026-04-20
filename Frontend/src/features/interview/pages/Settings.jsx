@@ -36,6 +36,9 @@ const Settings = () => {
     const [deletePassword, setDeletePassword] = useState("")
     const [message, setMessage] = useState("")
     const [error, setError] = useState("")
+    const [timezone, setTimezone] = useState(() => {
+        try { return Intl.DateTimeFormat().resolvedOptions().timeZone } catch { return "Asia/Kolkata" }
+    })
     const [cameraOpen, setCameraOpen] = useState(false)
     const [cameraReady, setCameraReady] = useState(false)
 
@@ -50,6 +53,7 @@ const Settings = () => {
         setTargetJob(user?.targetJob || "")
         setTargetCompany(user?.targetCompany || "")
         setAvatarPreview(user?.avatar || "")
+        if (user?.timezone) setTimezone(user.timezone)
     }, [user])
 
     useEffect(() => {
@@ -190,7 +194,8 @@ const Settings = () => {
             avatarDataUrl: "",
             experienceLevel,
             targetJob,
-            targetCompany
+            targetCompany,
+            timezone
         })
         if (result?.ok) {
             setMessage("Profile photo deleted.")
@@ -210,7 +215,8 @@ const Settings = () => {
             avatarDataUrl: avatarToSave,
             experienceLevel,
             targetJob,
-            targetCompany
+            targetCompany,
+            timezone
         })
 
         if (!result?.ok) {

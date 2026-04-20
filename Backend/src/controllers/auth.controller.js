@@ -60,7 +60,8 @@ function buildUserResponse(user) {
         preferences: {
             emailNotifications: user.preferences?.emailNotifications ?? true,
             aiVoiceInterface: user.preferences?.aiVoiceInterface ?? false
-        }
+        },
+        timezone: user.timezone || "Asia/Kolkata"
     }
 }
 
@@ -403,7 +404,8 @@ async function updateSettingsController(req, res) {
         avatarDataUrl,
         experienceLevel,
         targetJob,
-        targetCompany
+        targetCompany,
+        timezone
     } = req.body || {}
     const user = await userModel.findById(req.user.id)
 
@@ -458,6 +460,10 @@ async function updateSettingsController(req, res) {
         if (typeof preferences.aiVoiceInterface === "boolean") {
             user.preferences.aiVoiceInterface = preferences.aiVoiceInterface
         }
+    }
+
+    if (typeof timezone === "string" && timezone.trim()) {
+        user.timezone = timezone.trim()
     }
 
     await user.save()

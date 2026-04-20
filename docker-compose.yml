@@ -1,6 +1,13 @@
 version: '3.8'
 
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: intelliprep-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
   backend:
     build:
       context: ./Backend
@@ -11,11 +18,14 @@ services:
     environment:
       - NODE_ENV=development
       - FRONTEND_URL=http://localhost:5173
+      - REDIS_URL=redis://redis:6379
     env_file:
       - ./Backend/.env
     volumes:
       - ./Backend:/app
       - /app/node_modules
+    depends_on:
+      - redis
     restart: unless-stopped
 
   frontend:

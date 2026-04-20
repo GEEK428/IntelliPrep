@@ -77,8 +77,21 @@ const noteSchema = new mongoose.Schema({
     spacedRepetitionDueAt: {
         type: Date,
         default: null
+    },
+    srInterval: {
+        type: Number,
+        default: 1    // days until next review
+    },
+    srEaseFactor: {
+        type: Number,
+        default: 2.5  // SM-2 ease factor (2.5 = default)
     }
 }, { timestamps: true })
+
+noteSchema.index({ user: 1, createdAt: -1 })
+noteSchema.index({ user: 1, domain: 1 })
+noteSchema.index({ user: 1, status: 1 })
+noteSchema.index({ user: 1, spacedRepetitionDueAt: 1 })
 
 const noteModel = mongoose.model("Note", noteSchema)
 

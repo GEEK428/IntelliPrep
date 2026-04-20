@@ -126,7 +126,8 @@ export const useAuth = () => {
         avatarDataUrl,
         experienceLevel,
         targetJob,
-        targetCompany
+        targetCompany,
+        timezone
     }) => {
         setLoading(true)
         try {
@@ -137,7 +138,8 @@ export const useAuth = () => {
                 avatarDataUrl,
                 experienceLevel,
                 targetJob,
-                targetCompany
+                targetCompany,
+                timezone
             })
             setUser(data.user)
             return { ok: true, data }

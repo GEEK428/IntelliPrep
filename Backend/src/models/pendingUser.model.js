@@ -24,6 +24,9 @@ const pendingUserSchema = new mongoose.Schema({
     }
 })
 
+// Fast lookup for verifyEmailController's findOne({ verifyToken })
+pendingUserSchema.index({ verifyToken: 1 })
+
 const pendingUserModel = mongoose.model("pendingUsers", pendingUserSchema)
 
 module.exports = pendingUserModel

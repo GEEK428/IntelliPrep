@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from "../services/progress.api"
+import { onNotification, offNotification } from "../../../services/socket.service"
 import "../style/progress-tracker.scss"
 
 /* NotificationBell — bell icon only. User profile is handled by TopBar. */
@@ -18,6 +19,19 @@ const NotificationBell = () => {
     }
 
     useEffect(() => { loadNotifications() }, [])
+
+    useEffect(() => {
+        const handleNewNotification = (notif) => {
+            setNotifications((prev) => {
+                // Prevent duplicates
+                if (prev.find(n => n._id === notif._id)) return prev;
+                return [notif, ...prev];
+            });
+        };
+
+        onNotification(handleNewNotification);
+        return () => offNotification(handleNewNotification);
+    }, []);
 
     useEffect(() => {
         const timer = setInterval(() => setTick(Date.now()), 15000)

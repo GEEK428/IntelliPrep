@@ -1,5 +1,6 @@
 import { createContext, useEffect, useState } from "react";
 import { getMe } from "./services/auth.api";
+import { initSocket, disconnectSocket } from "../../services/socket.service";
 
 
 export const AuthContext = createContext()
@@ -24,6 +25,17 @@ export const AuthProvider = ({ children }) => {
 
         bootstrapAuth()
     }, [])
+
+    useEffect(() => {
+        if (user) {
+            const token = localStorage.getItem("intelliprep_token");
+            if (token) {
+                initSocket(token);
+            }
+        } else {
+            disconnectSocket();
+        }
+    }, [user])
 
     return (
         <AuthContext.Provider value={{user,setUser,loading,setLoading}} >

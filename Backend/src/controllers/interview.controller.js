@@ -287,17 +287,37 @@ async function getInterviewInsightsController(req, res) {
 
 
 /**
- * @description Get all interview reports of the logged-in user.
+ * @description Get all interview reports of the logged-in user (paginated).
  */
 async function getAllInterviewReportsController(req, res) {
-    const interviewReports = await interviewReportModel
-        .find({ user: req.user.id })
-        .sort({ createdAt: -1 })
-        .select("-resume -selfDescription -jobDescription -__v -technicalQuestions -behavioralQuestions -skillGaps -preparationPlan -resumePdfCache")
+
+    // Parse + clamp pagination params from query string
+    const page  = Math.max(1, parseInt(req.query.page)  || 1)
+    const limit = Math.min(20, Math.max(1, parseInt(req.query.limit) || 10))
+    const skip  = (page - 1) * limit
+
+    // Run count + fetch in parallel — no extra latency
+    const [interviewReports, total] = await Promise.all([
+        interviewReportModel
+            .find({ user: req.user.id })
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .select("-resume -selfDescription -jobDescription -__v -technicalQuestions -behavioralQuestions -skillGaps -preparationPlan -resumePdfCache"),
+        interviewReportModel.countDocuments({ user: req.user.id })
+    ])
 
     res.status(200).json({
         message: "Interview reports fetched successfully.",
-        interviewReports
+        interviewReports,
+        pagination: {
+            page,
+            limit,
+            total,
+            pages: Math.ceil(total / limit),
+            hasNext: page * limit < total,
+            hasPrev: page > 1
+        }
     })
 }
 
@@ -343,6 +363,12 @@ async function generateResumePdfController(req, res) {
 
     if (!interviewReport) {
         return res.status(404).json({ message: "Interview report not found." })
+    }
+
+    if (interviewReport.matchScore >= 90) {
+        return res.status(400).json({
+            message: `No optimization required. Your resume already has an excellent match score of ${interviewReport.matchScore}%!`
+        })
     }
 
     const { resume, jobDescription, selfDescription, topSkills } = interviewReport
@@ -449,5 +475,6 @@ module.exports = {
     getAllInterviewReportsController,
     deleteInterviewReportController,
     generateResumePdfController,
-    getDashboardStatsController
+    getDashboardStatsController,
+    buildFallbackInterviewReport
 }

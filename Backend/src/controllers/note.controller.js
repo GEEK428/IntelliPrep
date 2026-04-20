@@ -8,6 +8,8 @@ const fs = require("fs/promises")
 const path = require("path")
 const MAX_NOTES_PER_USER = 300
 
+const DOMPurify = require("isomorphic-dompurify")
+
 function parseTags(input = "") {
     if (Array.isArray(input)) {
         return input
@@ -24,9 +26,7 @@ function parseTags(input = "") {
 }
 
 function sanitizeHtml(html = "") {
-    return String(html || "")
-        .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
-        .replace(/on\w+="[^"]*"/gi, "")
+    return DOMPurify.sanitize(String(html || ""))
 }
 
 function validateDomainSubdomain(domain, subdomain) {
@@ -153,13 +153,47 @@ async function extractTextFromUpload(file) {
     throw new Error("Unsupported file format. Please upload PDF, DOC or DOCX.")
 }
 
-function computeSpacedRepetitionDate(status) {
-    if (status !== "done") {
-        return null
+function addDays(date, days) {
+    const d = new Date(date)
+    d.setDate(d.getDate() + days)
+    return d
+}
+
+// SM-2 algorithm — same one used by Anki
+// confidence: 1-5 (maps to SM-2 quality rating)
+function computeNextReview(note, newConfidence) {
+    if (newConfidence < 3) {
+        // Failed review — restart interval, decrease ease factor
+        return {
+            srInterval: 1,
+            srEaseFactor: Math.max(1.3, (note.srEaseFactor || 2.5) - 0.2),
+            spacedRepetitionDueAt: addDays(new Date(), 1)
+        }
     }
-    const next = new Date()
-    next.setDate(next.getDate() + 7)
-    return next
+
+    // Passed review — grow interval
+    const quality = newConfidence - 1  // confidence 3-5 → quality 2-4
+    const currentEase = note.srEaseFactor || 2.5
+    const newEase = Math.max(
+        1.3,
+        currentEase + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
+    )
+    const currentInterval = note.srInterval || 1
+    const newInterval = currentInterval <= 1
+        ? 6   // second review always at 6 days
+        : Math.round(currentInterval * newEase)
+
+    return {
+        srInterval: newInterval,
+        srEaseFactor: newEase,
+        spacedRepetitionDueAt: addDays(new Date(), newInterval)
+    }
+}
+
+// Legacy wrapper for create (simple: status=done → review in 1 day)
+function computeSpacedRepetitionDate(status) {
+    if (status !== "done") return null
+    return addDays(new Date(), 1)
 }
 
 async function createNoteController(req, res) {
@@ -294,18 +328,26 @@ async function updateNoteController(req, res) {
     if (typeof updates.difficulty === "string") {
         note.difficulty = updates.difficulty
     }
+    if (updates.confidence !== undefined) {
+        note.confidence = Math.max(1, Math.min(5, Number(updates.confidence || 3)))
+    }
     if (typeof updates.status === "string") {
         note.status = updates.status
-        note.spacedRepetitionDueAt = computeSpacedRepetitionDate(updates.status)
+        // Use SM-2 algorithm when marking as done with a confidence rating
+        if (updates.status === "done" && typeof note.confidence === "number") {
+            const sr = computeNextReview(note, note.confidence)
+            note.srInterval = sr.srInterval
+            note.srEaseFactor = sr.srEaseFactor
+            note.spacedRepetitionDueAt = sr.spacedRepetitionDueAt
+        } else {
+            note.spacedRepetitionDueAt = computeSpacedRepetitionDate(updates.status)
+        }
     }
     if (typeof updates.bookmarked === "boolean") {
         note.bookmarked = updates.bookmarked
     }
     if (typeof updates.sourceTag === "string") {
         note.sourceTag = updates.sourceTag.trim().slice(0, 120)
-    }
-    if (updates.confidence !== undefined) {
-        note.confidence = Math.max(1, Math.min(5, Number(updates.confidence || 3)))
     }
 
     await note.save()

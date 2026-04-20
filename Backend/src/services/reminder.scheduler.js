@@ -1,8 +1,11 @@
+const nodemailer = require("nodemailer");
 const { Resend } = require("resend");
 const roadmapModel = require("../models/roadmap.model")
 const userModel = require("../models/user.model")
 const notificationModel = require("../models/notification.model")
 const goalModel = require("../models/goal.model")
+const { emitNotification } = require("../socket")
+let smtpTransporter = null
 
 function startOfDay(dateValue = new Date()) {
     const d = new Date(dateValue)
@@ -30,19 +33,58 @@ function hhmmToMinutes(value = "00:00") {
     return (hh * 60) + mm
 }
 
-function shouldTriggerNow(reminderTime, now) {
-    const istString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
-    const ist = new Date(istString)
-    const nowMinutes = (ist.getHours() * 60) + ist.getMinutes()
+function shouldTriggerNow(reminderTime, now, timezone = "Asia/Kolkata") {
+    const localString = now.toLocaleString("en-US", { timeZone: timezone })
+    const local = new Date(localString)
+    const nowMinutes = (local.getHours() * 60) + local.getMinutes()
     return nowMinutes >= hhmmToMinutes(reminderTime)
 }
 
 async function sendEmailSafe({ to, subject, text, html }) {
-    const { RESEND_API_KEY, RESEND_FROM_EMAIL } = process.env;
+    const {
+        SMTP_HOST,
+        SMTP_PORT,
+        SMTP_USER,
+        SMTP_PASS,
+        SMTP_FROM,
+        RESEND_API_KEY,
+        RESEND_FROM_EMAIL
+    } = process.env;
+
+    const hasSmtpConfig = Boolean(SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS)
+
+    if (hasSmtpConfig) {
+        try {
+            if (!smtpTransporter) {
+                smtpTransporter = nodemailer.createTransport({
+                    host: SMTP_HOST,
+                    port: Number(SMTP_PORT),
+                    secure: Number(SMTP_PORT) === 465,
+                    auth: {
+                        user: SMTP_USER,
+                        pass: SMTP_PASS
+                    }
+                })
+            }
+
+            await smtpTransporter.sendMail({
+                from: SMTP_FROM || SMTP_USER,
+                to,
+                subject,
+                text,
+                html
+            })
+            return
+        } catch (e) {
+            console.log(`[ReminderEmail:SMTPFailed] ${e.message}`)
+        }
+    }
+
     if (!RESEND_API_KEY) {
         console.log(`[ReminderEmail:Preview] ${to} | ${subject} | ${text}`);
         return;
     }
+
     try {
         const resend = new Resend(RESEND_API_KEY);
         const { error } = await resend.emails.send({
@@ -58,21 +100,23 @@ async function sendEmailSafe({ to, subject, text, html }) {
 }
 
 async function createInAppNotification({ userId, type, title, message, meta = {} }) {
-    await notificationModel.create({
+    const notification = await notificationModel.create({
         user: userId,
         type,
         title,
         message,
         meta
     })
+
+    // Real-time notification emit
+    emitNotification(userId, notification);
 }
 
 async function processRoadmapReminder(roadmap, now) {
-    const user = await userModel.findById(roadmap.user).select("email username isVerified preferences.emailNotifications")
+    const user = await userModel.findById(roadmap.user).select("email username preferences.emailNotifications timezone")
     if (!user) return
     const canSendEmail = Boolean(
         user.email &&
-        user.isVerified &&
         user.preferences?.emailNotifications !== false &&
         [ "email", "both" ].includes(roadmap.reminderType)
     )
@@ -182,7 +226,8 @@ function startReminderScheduler() {
             }).limit(1000)
 
             for (const roadmap of roadmaps) {
-                if (!shouldTriggerNow(roadmap.reminderTime, now)) {
+                const roadmapUser = await userModel.findById(roadmap.user).select("timezone").lean()
+                if (!shouldTriggerNow(roadmap.reminderTime, now, roadmapUser?.timezone)) {
                     continue
                 }
                 await processRoadmapReminder(roadmap, now)

@@ -8,16 +8,7 @@ import TopBar from "../components/TopBar"
 import Loader from "../../../components/Loader"
 
 const COMMON_SUBDOMAINS = [
-    "None",
-    "DSA",
-    "Core Domain",
-    "Developement",
-    "Cybersecurity",
-    "AI",
-    "ML",
-    "Data Science",
-    "System Design",
-    "Cloud/Devops"
+    "None", "DSA", "Core Domain", "Developement", "Cybersecurity", "AI", "ML", "Data Science", "System Design", "Cloud/Devops"
 ]
 
 const DOMAIN_MAP = {
@@ -36,9 +27,9 @@ const TOOLBAR_ACTIONS = [
 ]
 
 const statusLabel = (status) => {
-    if (status === "done") return "Understood"
-    if (status === "needs_revision") return "Needs Revision"
-    return "Understood"
+    if (status === "done") return "Review Ready"
+    if (status === "needs_revision") return "In Progress"
+    return "Review Ready"
 }
 
 const Notes = () => {
@@ -56,16 +47,17 @@ const Notes = () => {
     const [aiLoading, setAiLoading] = useState(false)
     const [saveLoading, setSaveLoading] = useState(false)
     const [isCreatingNew, setIsCreatingNew] = useState(true)
+    
+    // Original Filter States
     const [filterDomain, setFilterDomain] = useState("all")
     const [filterSubdomain, setFilterSubdomain] = useState("all")
     const [filterDifficulty, setFilterDifficulty] = useState("all")
     const [filterUnderstanding, setFilterUnderstanding] = useState("all")
     const [filterConfidence, setFilterConfidence] = useState("all")
     const [filterBookmarked, setFilterBookmarked] = useState("all")
-    const [showAllNotes, setShowAllNotes] = useState(false)
     const [showFilterOptions, setShowFilterOptions] = useState(false)
-    const [showChooseOptions, setShowChooseOptions] = useState(false)
 
+    // Original Form States
     const [domain, setDomain] = useState("Technical")
     const [subdomain, setSubdomain] = useState("DSA")
     const [question, setQuestion] = useState("")
@@ -77,13 +69,7 @@ const Notes = () => {
     const [confidence, setConfidence] = useState(3)
 
     const activeNote = useMemo(() => notes.find((item) => item._id === activeId) || null, [ notes, activeId ])
-    const aiLimitMessage = useMemo(() => {
-        const msg = String(error || "")
-        if (msg.toLowerCase().includes("you have reached limit")) {
-            return msg
-        }
-        return ""
-    }, [ error ])
+    
     const displayedNotes = useMemo(() => {
         const q = search.trim().toLowerCase()
         return notes.filter((note) => {
@@ -96,86 +82,34 @@ const Notes = () => {
             if (filterBookmarked === "no" && note.bookmarked) return false
             if (filterConfidence !== "all" && Number(note.confidence || 3) !== Number(filterConfidence)) return false
             if (!q) return true
-            const haystack = [
-                note.question,
-                note.answer,
-                note.domain,
-                note.subdomain,
-                note.sourceTag
-            ].join(" ").toLowerCase()
+            const haystack = [note.question, note.answer, note.domain, note.subdomain, note.sourceTag].join(" ").toLowerCase()
             return haystack.includes(q)
         })
     }, [ notes, filterDomain, filterSubdomain, filterDifficulty, filterUnderstanding, filterBookmarked, filterConfidence, search ])
-    const previewNotes = useMemo(() => displayedNotes.slice(0, 3), [ displayedNotes ])
 
     const stats = useMemo(() => {
         const understood = notes.filter((item) => item.status === "done").length
         const needsRevision = notes.filter((item) => item.status === "needs_revision").length
-        const generated = notes.length
-        const successRate = generated ? Math.round((understood / generated) * 100) : 0
-        const bookmarkedCount = notes.filter((item) => Boolean(item.bookmarked)).length
-        const averageConfidence = generated
-            ? (notes.reduce((acc, item) => acc + Number(item.confidence || 3), 0) / generated).toFixed(1)
-            : "0.0"
-        const visibleAfterFilter = displayedNotes.length
-        return { understood, needsRevision, successRate, generated, bookmarkedCount, averageConfidence, visibleAfterFilter }
-    }, [ notes, displayedNotes ])
+        const total = notes.length
+        const successRate = total ? Math.round((understood / total) * 100) : 0
+        return { understood, needsRevision, successRate, total }
+    }, [ notes ])
 
-    const chart = useMemo(() => {
-        const total = Math.max(1, stats.generated)
-        const understoodDeg = (stats.understood / total) * 360
-        const revisionDeg = (stats.needsRevision / total) * 360
-        const understoodPct = Math.round((stats.understood / total) * 100)
-        const revisionPct = Math.round((stats.needsRevision / total) * 100)
-        return {
-            style: {
-                background: `conic-gradient(
-                    #1b6b55 0deg ${understoodDeg}deg,
-                    #8e3c35 ${understoodDeg}deg ${understoodDeg + revisionDeg}deg,
-                    #151d28 ${understoodDeg + revisionDeg}deg 360deg
-                )`
-            },
-            understoodPct,
-            revisionPct
-        }
+    const pieChartStyle = useMemo(() => {
+        const total = Math.max(1, stats.total)
+        return { background: `conic-gradient(#00cfb1 0deg ${(stats.understood / total) * 360}deg, #151d28 ${(stats.understood / total) * 360}deg 360deg)` }
     }, [ stats ])
-
-    useEffect(() => {
-        document.title = "Notes / Prep Space | IntelliPrep"
-    }, [])
-
-    useEffect(() => {
-        const firstSubdomain = DOMAIN_MAP[domain]?.[0] || ""
-        setSubdomain(firstSubdomain)
-    }, [ domain ])
-
-    useEffect(() => {
-        setFilterSubdomain("all")
-    }, [ filterDomain ])
 
     const loadNotes = async () => {
         setLoading(true)
-        setError("")
         try {
-            const response = await getNotes({
-                view: "all"
-            })
-            const fetched = response?.notes || []
-            setNotes(fetched)
-            if (activeId && !fetched.some((note) => note._id === activeId)) {
-                setActiveId("")
-                setIsCreatingNew(true)
-            }
-        } catch (err) {
-            setError(err?.response?.data?.message || "Unable to load notes.")
-        } finally {
-            setLoading(false)
-        }
+            const response = await getNotes({ view: "all" })
+            setNotes(response?.notes || [])
+        } catch (err) { setError("Unable to load notes.") }
+        finally { setLoading(false) }
     }
 
-    useEffect(() => {
-        loadNotes()
-    }, [])
+    useEffect(() => { loadNotes() }, [])
 
     useEffect(() => {
         if (!activeNote) return
@@ -185,214 +119,95 @@ const Notes = () => {
         setQuestion(activeNote.question || "")
         setAnswer(activeNote.answer || "")
         setDifficulty(activeNote.difficulty || "medium")
-        setStatus(activeNote.status === "needs_revision" ? "needs_revision" : "done")
+        setStatus(activeNote.status || "done")
         setBookmarked(Boolean(activeNote.bookmarked))
         setSourceTag(activeNote.sourceTag || "")
         setConfidence(activeNote.confidence || 3)
-        if (editorRef.current) {
-            editorRef.current.innerHTML = activeNote.answerHtml || activeNote.answer || ""
-        }
+        if (editorRef.current) editorRef.current.innerHTML = activeNote.answerHtml || activeNote.answer || ""
         setIsDirty(false)
     }, [ activeNote ])
 
-    useEffect(() => {
-        if (!activeId || !isDirty) return
-        const timer = setInterval(() => {
-            handleSaveNote({ silent: true })
-        }, 30000)
-        return () => clearInterval(timer)
-    }, [ activeId, isDirty, domain, subdomain, question, answer, difficulty, status, bookmarked, sourceTag, confidence ])
-
-
+    const handleSaveNote = async () => {
+        if (!question.trim()) return setError("Question is required.")
+        setSaveLoading(true)
+        const payload = {
+            domain, subdomain, question: question.trim(), answer: answer.trim(),
+            answerHtml: editorRef.current?.innerHTML || "", difficulty, status,
+            bookmarked, sourceTag, confidence
+        }
+        try {
+            if (isCreatingNew) {
+                const res = await createNote(payload)
+                setNotes(prev => [res.note, ...prev])
+                resetForm()
+            } else {
+                const res = await updateNote(activeId, payload)
+                setNotes(prev => prev.map(n => n._id === res.note._id ? res.note : n))
+            }
+            setMessage("Changes saved successfully.")
+        } catch (err) { setError("Failed to save.") }
+        finally { setSaveLoading(false) }
+    }
 
     const resetForm = () => {
         setIsCreatingNew(true)
         setActiveId("")
-        setDomain("Technical")
-        setSubdomain("DSA")
         setQuestion("")
         setAnswer("")
-        setDifficulty("medium")
-        setStatus("done")
-        setBookmarked(false)
-        setSourceTag("")
-        setConfidence(3)
-        if (editorRef.current) {
-            editorRef.current.innerHTML = ""
-        }
+        setSubdomain(DOMAIN_MAP[domain]?.[0] || "")
+        if (editorRef.current) editorRef.current.innerHTML = ""
         setIsDirty(false)
     }
 
-    const handleSaveNote = async ({ silent = false } = {}) => {
-        if (!question.trim()) {
-            if (!silent) setError("Question is required.")
-            return
-        }
-
-        setSaveLoading(true)
-        if (!silent) {
-            setError("")
-            setMessage("")
-        }
-
-        const payload = {
-            domain,
-            subdomain,
-            question: question.trim(),
-            answer: answer.trim(),
-            answerHtml: editorRef.current?.innerHTML || "",
-            difficulty,
-            status,
-            bookmarked,
-            sourceTag,
-            confidence
-        }
-
+    const handleDelete = async (e, id) => {
+        e.stopPropagation()
+        if (!window.confirm("Delete this question?")) return
         try {
-            if (isCreatingNew || !activeId) {
-                const response = await createNote(payload)
-                const created = response?.note
-                if (!created) return
-                setNotes((prev) => [ created, ...prev ])
-                if (!silent) {
-                    setMessage("Question saved to Question Bank.")
-                }
-                setActiveId("")
-                setIsCreatingNew(true)
-                setQuestion("")
-                setAnswer("")
-                setSourceTag("")
-                setBookmarked(false)
-                setConfidence(3)
-                setStatus("done")
-                if (editorRef.current) {
-                    editorRef.current.innerHTML = ""
-                }
-            } else {
-                const response = await updateNote(activeId, payload)
-                const updated = response?.note
-                if (!updated) return
-                setNotes((prev) => prev.map((item) => item._id === updated._id ? updated : item))
-                if (!silent) setMessage("Changes saved.")
-            }
-            setIsDirty(false)
-        } catch (err) {
-            if (!silent) setError(err?.response?.data?.message || "Unable to save note.")
-        } finally {
-            setSaveLoading(false)
-        }
+            await deleteNote(id)
+            setNotes(prev => prev.filter(n => n._id !== id))
+            if (activeId === id) resetForm()
+        } catch (err) { setError("Delete failed.") }
     }
 
-    const handleDelete = async (noteId) => {
-        try {
-            await deleteNote(noteId)
-            setNotes((prev) => prev.filter((item) => item._id !== noteId))
-            setSelectedIds((prev) => prev.filter((id) => id !== noteId))
-            if (activeId === noteId) {
-                resetForm()
-            }
-        } catch (err) {
-            setError(err?.response?.data?.message || "Unable to delete note.")
-        }
-    }
-
-    const toggleSelect = (noteId) => {
-        setSelectedIds((prev) => prev.includes(noteId)
-            ? prev.filter((id) => id !== noteId)
-            : [ ...prev, noteId ])
+    const toggleSelect = (id) => {
+        setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
     }
 
     const handleExportSelected = async () => {
-        // Pre-open tab for mobile popup bypass
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-        let downloadWindow = null
-        if (isMobile) {
-            downloadWindow = window.open('about:blank', '_blank')
-        }
-
+        if (!selectedIds.length) return setError("Select questions to export.")
         try {
             const blob = await exportNotesPdf(selectedIds)
-            const url = window.URL.createObjectURL(new Blob([ blob ], { type: "application/pdf" }))
-            
-            if (isMobile && downloadWindow) {
-                downloadWindow.location.href = url
-            } else {
-                const link = document.createElement("a")
-                link.href = url
-                link.setAttribute("download", "intelliprep_notes.pdf")
-                document.body.appendChild(link)
-                link.click()
-                link.remove()
-                setTimeout(() => window.URL.revokeObjectURL(url), 1000)
-            }
-            setMessage("PDF downloaded.")
-        } catch (err) {
-            if (downloadWindow) downloadWindow.close()
-            setError(err?.response?.data?.message || "Unable to export notes.")
-        }
+            const url = window.URL.createObjectURL(new Blob([blob], { type: "application/pdf" }))
+            const link = document.createElement("a")
+            link.href = url
+            link.setAttribute("download", "intelliprep_notes.pdf")
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+        } catch (err) { setError("Export failed.") }
     }
 
     const handleGenerateAiAnswer = async () => {
-        setMessage("")
-        setError("")
-        if (!question.trim()) {
-            setError("Add a question first to generate AI answer.")
-            return
-        }
-
+        if (!question.trim()) return setError("Enter a question first.")
         setAiLoading(true)
         try {
-            const response = await generateAiAnswer({
-                domain,
-                subdomain,
-                question: question.trim(),
-                sourceTag,
-                difficulty
-            })
-            const aiAnswer = response?.aiAnswer
-            if (!aiAnswer) {
-                setError("AI answer generation failed.")
-                return
-            }
-
-            const html = aiAnswer.answerHtml || `<p>${String(aiAnswer.answerText || "").replace(/\n/g, "<br/>")}</p>`
-            if (editorRef.current) {
-                editorRef.current.innerHTML = html
-            }
-            setAnswer(aiAnswer.answerText || editorRef.current?.innerText || "")
+            const res = await generateAiAnswer({ domain, subdomain, question, sourceTag, difficulty })
+            const html = res.aiAnswer.answerHtml || `<p>${res.aiAnswer.answerText}</p>`
+            if (editorRef.current) editorRef.current.innerHTML = html
+            setAnswer(res.aiAnswer.answerText)
             setIsDirty(true)
-            setMessage("AI answer inserted. Click Save.")
-        } catch (err) {
-            setError(err?.response?.data?.message || "Unable to generate AI answer.")
-        } finally {
-            setAiLoading(false)
-        }
+        } catch (err) { setError("AI failed.") }
+        finally { setAiLoading(false) }
     }
 
-    const exec = (command, value = null) => {
-        document.execCommand(command, false, value)
+    const exec = (cmd) => {
+        document.execCommand(cmd, false, null)
         setAnswer(editorRef.current?.innerText || "")
         setIsDirty(true)
     }
 
-    const setTextColor = (color) => exec("foreColor", color)
-    const setHighlight = () => {
-        exec("hiliteColor", "#fff8c9")
-        exec("foreColor", "#0e1a25")
-    }
-    const setDefaultTextColor = () => exec("foreColor", "#eaf2f8")
-    const clearHighlight = () => {
-        exec("hiliteColor", "transparent")
-        exec("foreColor", "#eaf2f8")
-    }
-
     const subdomains = DOMAIN_MAP[domain] || []
-    const filterSubdomainOptions = useMemo(() => {
-        if (filterDomain === "all") {
-            return COMMON_SUBDOMAINS
-        }
-        return DOMAIN_MAP[filterDomain] || []
-    }, [ filterDomain ])
+    const filterSubdomainOptions = filterDomain === "all" ? COMMON_SUBDOMAINS : (DOMAIN_MAP[filterDomain] || [])
 
     return (
         <main className="dashboard-page">
@@ -400,405 +215,235 @@ const Notes = () => {
 
             <section className="dashboard-main notes-main">
                 <TopBar />
-                <div className="page-header notes-page-header" style={{ marginBottom: "0.6rem" }}>
-                    <h1>Notes & Prep Space</h1>
-                    <p className="subtitle">Capture interview questions, refine answers, and track your prep confidence.</p>
-                </div>
 
-                <div className="notes-search-row">
+                {/* SEARCH BAR (TOP) */}
+                <div className="notes-search-row" style={{ marginBottom: '1rem' }}>
                     <div className="notes-search-wrap">
-                        <span className="notes-search-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none">
-                                <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-                                <path d="M20 20L16.7 16.7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                            </svg>
-                        </span>
+                        <span className="material-symbols-outlined search-icon">search</span>
                         <input
                             className="notes-search"
-                            placeholder="Search by keyword in question, answer, source..."
+                            placeholder="Search by keywords in question, answer, domain..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
                 </div>
-
-                <div className="notes-layout">
-                    <article className="notes-panel notes-list-panel">
-                        <div className="notes-panel__head">
-                            <div>
-                                <h3>Question Bank</h3>
-                                <p className="desktop-only-description">Browse, filter, and select questions you want to practice or export.</p>
+                
+                {/* VELOCITY HEADER */}
+                <header className="notes-optimized-header">
+                    <div className="velocity-card card-glass">
+                        <div className="velocity-header">
+                            <p>PREPARATION VELOCITY</p>
+                            <div className="velocity-main">
+                                <h1>{stats.successRate}%</h1>
+                                <span className="velocity-meta">Completion rate this week</span>
                             </div>
-                            <div className="notes-panel__actions">
-                                <button type="button" onClick={() => setShowFilterOptions((prev) => !prev)}>
+                        </div>
+                        <div className="velocity-pie-wrap">
+                            <div className="velocity-pie" style={pieChartStyle}>
+                                <div className="velocity-pie-inner">
+                                    <p>DAILY GOAL</p>
+                                    <strong>{stats.understood} / {Math.max(stats.total, 15)}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="streak-card card-glass">
+                        <span className="material-symbols-outlined streak-icon">military_tech</span>
+                        <p>CURRENT STREAK</p>
+                        <h1>14 Days</h1>
+                    </div>
+                </header>
+
+                <div className="notes-content-grid">
+                    <div className="notes-column-left">
+                        <div className="column-head">
+                            <h2>Active Question Bank</h2>
+                            <div className="column-head-actions">
+                                <button className="filter-chip icon-only" onClick={() => setShowFilterOptions(!showFilterOptions)}>
+                                    <span className="material-symbols-outlined">filter_list</span>
                                     {showFilterOptions ? "Hide Filters" : "Filter Options"}
                                 </button>
-                                <button type="button" className="generate-btn compact" onClick={resetForm} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>add</span>
-                                    New Question
+                                <button className="filter-chip active" onClick={resetForm}>
+                                    <span className="material-symbols-outlined">add</span> New
                                 </button>
                             </div>
                         </div>
 
-                            {showFilterOptions && (
-                                <div className="notes-filters">
-                                <label className="filter-field">
-                                    Domain Specific
-                                    <select value={filterDomain} onChange={(e) => setFilterDomain(e.target.value)}>
-                                        <option value="all">All</option>
-                                        <option value="Technical">Technical</option>
-                                        <option value="Behavioral">Behavioral</option>
-                                        <option value="Role Specific">Role Based</option>
-                                    </select>
-                                </label>
-                                <label className="filter-field">
-                                    Sub Domain
-                                    <select value={filterSubdomain} onChange={(e) => setFilterSubdomain(e.target.value)}>
-                                        <option value="all">All</option>
-                                        {filterSubdomainOptions.map((name) => (
-                                            <option key={name} value={name}>{name}</option>
-                                        ))}
-                                    </select>
-                                </label>
-                                <label className="filter-field">
-                                    Difficulty
-                                    <select value={filterDifficulty} onChange={(e) => setFilterDifficulty(e.target.value)}>
-                                        <option value="all">All</option>
-                                        <option value="easy">Easy</option>
-                                        <option value="medium">Medium</option>
-                                        <option value="hard">Hard</option>
-                                    </select>
-                                </label>
-                                <label className="filter-field">
-                                    Understanding Level
-                                    <select value={filterUnderstanding} onChange={(e) => setFilterUnderstanding(e.target.value)}>
-                                        <option value="all">All</option>
-                                        <option value="understood">Understood</option>
-                                        <option value="needs_revision">Needs Revision</option>
-                                    </select>
-                                </label>
-                                <label className="filter-field">
-                                    Confidence Level
-                                    <select value={filterConfidence} onChange={(e) => setFilterConfidence(e.target.value)}>
-                                        <option value="all">All</option>
-                                        <option value="1">1</option>
-                                        <option value="2">2</option>
-                                        <option value="3">3</option>
-                                        <option value="4">4</option>
-                                        <option value="5">5</option>
-                                    </select>
-                                </label>
-                                <label className="filter-field">
-                                    Bookmarked
-                                    <select value={filterBookmarked} onChange={(e) => setFilterBookmarked(e.target.value)}>
-                                        <option value="all">All</option>
-                                        <option value="yes">Yes</option>
-                                        <option value="no">No</option>
-                                    </select>
-                                </label>
+                        {showFilterOptions && (
+                            <div className="notes-quick-filters card-glass anim-fade">
+                                <div className="filter-grid">
+                                    <label>Domain
+                                        <select value={filterDomain} onChange={(e) => setFilterDomain(e.target.value)}>
+                                            <option value="all">All</option>
+                                            <option value="Technical">Technical</option>
+                                            <option value="Behavioral">Behavioral</option>
+                                            <option value="Role Specific">Role Based</option>
+                                        </select>
+                                    </label>
+                                    <label>Sub Domain
+                                        <select value={filterSubdomain} onChange={(e) => setFilterSubdomain(e.target.value)}>
+                                            <option value="all">All</option>
+                                            {filterSubdomainOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                    </label>
+                                    <label>Difficulty
+                                        <select value={filterDifficulty} onChange={(e) => setFilterDifficulty(e.target.value)}>
+                                            <option value="all">All</option>
+                                            <option value="easy">Easy</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="hard">Hard</option>
+                                        </select>
+                                    </label>
+                                    <label>Confidence
+                                        <select value={filterConfidence} onChange={(e) => setFilterConfidence(e.target.value)}>
+                                            <option value="all">All</option>
+                                            {[1,2,3,4,5].map(c => <option key={c} value={c}>{c}</option>)}
+                                        </select>
+                                    </label>
                                 </div>
-                            )}
+                            </div>
+                        )}
 
-                        {loading && <Loader message="Accessing your secure notes..." style={{ minHeight: '200px' }} />}
+                        <div className="notes-card-list">
+                            {displayedNotes.map((note) => (
+                                <article 
+                                    key={note._id} 
+                                    className={`note-card card-glass ${activeId === note._id ? 'active' : ''}`}
+                                    onClick={() => setActiveId(note._id)}
+                                >
+                                    <div className="note-card-badges">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={selectedIds.includes(note._id)} 
+                                            onChange={() => toggleSelect(note._id)}
+                                            onClick={e => e.stopPropagation()} 
+                                        />
+                                        <span className={`badge-diff ${note.difficulty}`}>{note.difficulty.toUpperCase()}</span>
+                                        <span className={`badge-status ${note.status}`}>{statusLabel(note.status).toUpperCase()}</span>
+                                    </div>
+                                    <h3>{note.question}</h3>
+                                    <div className="note-card-footer">
+                                        <span><i className="material-symbols-outlined">description</i> {note.subdomain}</span>
+                                        <span><i className="material-symbols-outlined">stars</i> Conf: {note.confidence}</span>
+                                        <button className="del-btn" onClick={(e) => handleDelete(e, note._id)}>
+                                            <span className="material-symbols-outlined">delete</span>
+                                        </button>
+                                    </div>
+                                </article>
+                            ))}
+                            {!loading && !displayedNotes.length && <p className="empty-msg">No questions found matching your filters.</p>}
+                            {loading && <Loader />}
+                        </div>
+                    </div>
 
-                        {!loading && (
-                            <div className="notes-list">
-                                {previewNotes.map((note) => (
-                                    <article
-                                        key={note._id}
-                                        className={`note-list-item ${activeId === note._id ? "active" : ""}`}
-                                        onClick={() => {
-                                            setActiveId(note._id)
-                                            setIsCreatingNew(false)
-                                        }}
-                                    >
-                                        <div className="note-list-item__top">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedIds.includes(note._id)}
-                                                onChange={(e) => {
-                                                    e.stopPropagation()
-                                                    toggleSelect(note._id)
-                                                }}
-                                            />
-                                            <strong>{note.question}</strong>
-                                        </div>
-                                        <p>{note.subdomain}</p>
-                                        <div className="note-list-item__meta">
-                                            {note.sourceTag && (
-                                                <span className="tag-pill tag-source">
-                                                    <span className="tag-icon">I</span>{note.sourceTag}
-                                                </span>
-                                            )}
-                                            <span className="tag-pill tag-status">
-                                                <span className="tag-icon">S</span>{statusLabel(note.status)}
-                                            </span>
-                                            <span className="tag-pill tag-diff">
-                                                <span className="tag-icon">D</span>{note.difficulty}
-                                            </span>
-                                            <span className="tag-pill tag-confidence">
-                                                <span className="tag-icon">C</span>{Number(note.confidence || 3)}
-                                            </span>
-                                            {note.bookmarked && (
-                                                <span className="tag-pill tag-bookmark">
-                                                    <span className="tag-icon">*</span>
-                                                </span>
-                                            )}
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    handleDelete(note._id)
-                                                }}
-                                            >
-                                                Delete
+                    <div className="notes-column-right">
+                        <div className="prep-form-card card-glass">
+                            <div className="form-head">
+                                <span className="material-symbols-outlined add-circle">{activeId ? "edit" : "add_circle"}</span>
+                                <h2>{activeId ? "Edit Prep Question" : "New Prep Question"}</h2>
+                            </div>
+
+                            <div className="form-body">
+                                <div className="input-group">
+                                    <label>QUESTION TITLE</label>
+                                    <textarea 
+                                        placeholder="e.g. Design a Rate Limiter" 
+                                        value={question} 
+                                        onChange={e => {setQuestion(e.target.value); setIsDirty(true)}}
+                                        style={{ minHeight: '60px', padding: '10px' }}
+                                    />
+                                </div>
+
+                                <div className="form-row">
+                                    <div className="input-group">
+                                        <label>DOMAIN</label>
+                                        <select value={domain} onChange={e => {setDomain(e.target.value); setIsDirty(true)}}>
+                                            {Object.keys(DOMAIN_MAP).map(d => <option key={d} value={d}>{d}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="input-group">
+                                        <label>SUBDOMAIN</label>
+                                        <select value={subdomain} onChange={e => {setSubdomain(e.target.value); setIsDirty(true)}}>
+                                            {subdomains.map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="form-row">
+                                    <div className="input-group">
+                                        <label>DIFFICULTY</label>
+                                        <select value={difficulty} onChange={e => {setDifficulty(e.target.value); setIsDirty(true)}}>
+                                            <option value="easy">Easy</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="hard">Hard</option>
+                                        </select>
+                                    </div>
+                                    <div className="input-group">
+                                        <label>LEVEL (CONFIDENCE 1-5)</label>
+                                        <select value={confidence} onChange={e => {setConfidence(e.target.value); setIsDirty(true)}}>
+                                            {[1,2,3,4,5].map(c => <option key={c} value={c}>{c}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="form-row">
+                                    <div className="input-group">
+                                        <label>UNDERSTANDING</label>
+                                        <select value={status} onChange={e => {setStatus(e.target.value); setIsDirty(true)}}>
+                                            <option value="done">Review Ready / Understood</option>
+                                            <option value="needs_revision">In Progress / Revise</option>
+                                        </select>
+                                    </div>
+                                    <div className="input-group">
+                                        <label>SOURCE TAG</label>
+                                        <input value={sourceTag} onChange={e => {setSourceTag(e.target.value); setIsDirty(true)}} placeholder="e.g. Google 2024" />
+                                    </div>
+                                </div>
+
+                                <div className="input-group">
+                                    <label>ANSWER / PREP NOTES</label>
+                                    <div className="rich-editor-wrap">
+                                        <div className="rich-toolbar">
+                                            {TOOLBAR_ACTIONS.map(a => <button key={a.label} onClick={() => exec(a.command)}>{a.label}</button>)}
+                                            <button onClick={handleGenerateAiAnswer} className="ai-tool" disabled={aiLoading}>
+                                                <span className="material-symbols-outlined">magic_button</span> AI Answers
                                             </button>
                                         </div>
-                                    </article>
-                                ))}
-                                {!previewNotes.length && <p className="notes-meta">No questions in this section.</p>}
-                            </div>
-                        )}
-                        {!loading && displayedNotes.length > 3 && (
-                            <button type="button" className="history-more-btn" onClick={() => setShowAllNotes(true)}>
-                                Show More
-                            </button>
-                        )}
-                        {!loading && (
-                            <button type="button" className="generate-btn compact notes-export-bottom" onClick={handleExportSelected}>
-                                Export Selected PDF
-                            </button>
-                        )}
-                    </article>
-
-                    <article className="notes-panel notes-editor-panel">
-                        <div className="notes-panel__head">
-                            <div>
-                                <h3>{isCreatingNew ? "Create Question" : "Edit Question"}</h3>
-                                <p className="desktop-only-description">Draft cleaner answers with formatting tools and AI support.</p>
-                            </div>
-                            <div className="notes-panel__actions">
-                                <button type="button" onClick={() => handleSaveNote()} disabled={saveLoading} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>save</span>
-                                    {saveLoading ? "Saving..." : "Save"}
-                                </button>
-                                <button type="button" onClick={handleGenerateAiAnswer} disabled={aiLoading || !question.trim()} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>psychology</span>
-                                    {aiLoading ? "Generating..." : "Answer with AI"}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="note-options-toggle">
-                            <button type="button" onClick={() => setShowChooseOptions((prev) => !prev)}>
-                                {showChooseOptions ? "Hide Options" : "Choose Options"}
-                            </button>
-                        </div>
-
-                        {showChooseOptions && (
-                            <div className="note-form-grid">
-                                <label>
-                                    Domain
-                                    <select value={domain} onChange={(e) => { setDomain(e.target.value); setIsDirty(true) }}>
-                                        {Object.keys(DOMAIN_MAP).map((name) => <option key={name} value={name}>{name}</option>)}
-                                    </select>
-                                </label>
-                                <label>
-                                    Subdomain
-                                    <select value={subdomain} onChange={(e) => { setSubdomain(e.target.value); setIsDirty(true) }}>
-                                        {subdomains.map((name) => <option key={name} value={name}>{name}</option>)}
-                                    </select>
-                                </label>
-                                <label>
-                                    Difficulty
-                                    <select value={difficulty} onChange={(e) => { setDifficulty(e.target.value); setIsDirty(true) }}>
-                                        <option value="easy">Easy</option>
-                                        <option value="medium">Medium</option>
-                                        <option value="hard">Hard</option>
-                                    </select>
-                                </label>
-                                <label>
-                                    Status
-                                    <select value={status} onChange={(e) => { setStatus(e.target.value); setIsDirty(true) }}>
-                                        <option value="done">Understood</option>
-                                        <option value="needs_revision">Needs Revision</option>
-                                    </select>
-                                </label>
-                                <label>
-                                    Book Marked
-                                    <select value={bookmarked ? "yes" : "no"} onChange={(e) => { setBookmarked(e.target.value === "yes"); setIsDirty(true) }}>
-                                        <option value="no">No</option>
-                                        <option value="yes">Yes</option>
-                                    </select>
-                                </label>
-                                <label>
-                                    Confidence (1-5)
-                                    <input type="number" min="1" max="5" value={confidence} onChange={(e) => { setConfidence(e.target.value); setIsDirty(true) }} />
-                                </label>
-                            </div>
-                        )}
-
-                        <label className="full-width">
-                            Question
-                            <textarea value={question} onChange={(e) => { setQuestion(e.target.value); setIsDirty(true) }} />
-                        </label>
-
-                        <div className="note-form-grid single-field">
-                            <label>
-                                Interview Source
-                                <input value={sourceTag} onChange={(e) => { setSourceTag(e.target.value); setIsDirty(true) }} placeholder="Asked in Google 2024" />
-                            </label>
-                        </div>
-
-                        <div className="editor-toolbar">
-                            {TOOLBAR_ACTIONS.map((action) => (
-                                <button key={action.label} type="button" onClick={() => exec(action.command, action.value)}>
-                                    {action.label}
-                                </button>
-                            ))}
-                            <button type="button" onClick={() => setTextColor("#8ec9f4")}>Text Blue</button>
-                            <button type="button" onClick={() => setTextColor("#9fe7cb")}>Text Green</button>
-                            <button type="button" onClick={setDefaultTextColor}>Text Original</button>
-                            <button type="button" onClick={setHighlight}>HL Yellow</button>
-                            <button type="button" onClick={clearHighlight}>HL Original</button>
-                        </div>
-
-                        {aiLimitMessage && <p className="notes-error editor-error">{aiLimitMessage}</p>}
-
-                        <div
-                            ref={editorRef}
-                            className="notes-editor"
-                            contentEditable
-                            suppressContentEditableWarning
-                            onInput={() => {
-                                setAnswer(editorRef.current?.innerText || "")
-                                setIsDirty(true)
-                            }}
-                        />
-
-                        <p className="notes-meta">{isDirty ? "Autosave pending (every 30s)." : "Saved."}</p>
-                    </article>
-
-                    <article className="notes-panel notes-stats-panel">
-                        <h3>Overall Statistics</h3>
-                        <p className="desktop-only-description">Monitor mastery trends and confidence to target weak spots faster.</p>
-                        <div className="notes-stats-visual">
-                            <div className="notes-pie-wrap enhanced">
-                                <div className="notes-pie" style={chart.style} aria-label="Notes status distribution chart">
-                                    <div className="notes-pie-center">
-                                        <strong>{stats.generated}</strong>
-                                        <span>Total</span>
-                                    </div>
-                                </div>
-                                <div className="notes-pie-legend">
-                                    <p><span className="dot dot-understood" />Understood: {stats.understood}</p>
-                                    <p><span className="dot dot-revision" />Needs Revision: {stats.needsRevision}</p>
-                                </div>
-                            </div>
-                            <div className="notes-visual-bars">
-                                <article className="notes-stat-row understood">
-                                    <div>
-                                        <p>Understood</p>
-                                        <strong>{chart.understoodPct}%</strong>
-                                    </div>
-                                    <div className="notes-stat-row__bar"><i style={{ width: `${chart.understoodPct}%` }} /></div>
-                                </article>
-                                <article className="notes-stat-row revision">
-                                    <div>
-                                        <p>Needs Revision</p>
-                                        <strong>{chart.revisionPct}%</strong>
-                                    </div>
-                                    <div className="notes-stat-row__bar"><i style={{ width: `${chart.revisionPct}%` }} /></div>
-                                </article>
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', marginTop: '0.6rem' }}>
-                            <div className="stat-box">
-                                <p>Mastery Rate</p>
-                                <strong>{stats.successRate}%</strong>
-                            </div>
-                            <div className="stat-box">
-                                <p>Avg Confidence</p>
-                                <strong>{stats.averageConfidence}/5</strong>
-                            </div>
-                            <div className="stat-box">
-                                <p>Bookmarked</p>
-                                <strong>{stats.bookmarkedCount}</strong>
-                            </div>
-                            <div className="stat-box">
-                                <p>Visible</p>
-                                <strong>{stats.visibleAfterFilter}</strong>
-                            </div>
-                        </div>
-
-                        <p className="notes-meta" style={{ marginTop: '0.6rem' }}>Selected for export: {selectedIds.length}</p>
-                    </article>
-                </div>
-
-                <div className="notes-flash">
-                    {error && !aiLimitMessage && <p className="notes-error">{error}</p>}
-                    {message && <p className="notes-success">{message}</p>}
-                </div>
-
-                <footer className="dashboard-footer">
-                    <a href="#" onClick={(e) => e.preventDefault()}>Privacy</a>
-                    <a href="#" onClick={(e) => e.preventDefault()}>Terms</a>
-                    <a href="#" onClick={(e) => e.preventDefault()}>Support</a>
-                </footer>
-            </section>
-
-            {showAllNotes && (
-                <section className="history-modal-overlay" onClick={() => setShowAllNotes(false)}>
-                    <article className="history-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="history-modal__head">
-                            <div>
-                                <h3>All Questions</h3>
-                                <p className="desktop-only-description">Review every saved question and manage export selections.</p>
-                            </div>
-                            <div className="history-modal__actions">
-                                <button type="button" onClick={() => setShowAllNotes(false)}>Close</button>
-                            </div>
-                        </div>
-                        <div className="history-modal__list">
-                            {displayedNotes.map((note) => (
-                                <div className="history-modal__item" key={note._id}>
-                                    <div className="history-modal__item-main">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedIds.includes(note._id)}
-                                            onChange={() => toggleSelect(note._id)}
+                                        <div 
+                                            ref={editorRef} 
+                                            className="custom-editor" 
+                                            contentEditable 
+                                            onInput={() => {setAnswer(editorRef.current.innerText); setIsDirty(true)}}
                                         />
-                                        <div>
-                                        <strong>{note.question}</strong>
-                                        <p>{note.domain} / {note.subdomain}</p>
-                                        </div>
-                                    </div>
-                                    <div className="history-modal__actions">
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setActiveId(note._id)
-                                                setIsCreatingNew(false)
-                                                setShowAllNotes(false)
-                                            }}
-                                        >
-                                            Open
-                                        </button>
-                                        <button type="button" onClick={() => handleDelete(note._id)}>Delete</button>
                                     </div>
                                 </div>
-                            ))}
+
+                                <button className="submit-btn" onClick={handleSaveNote} disabled={saveLoading}>
+                                    {saveLoading ? "SAVING..." : (activeId ? "UPDATE DRAFT" : "CREATE DRAFT")}
+                                </button>
+                                
+                                <div className="form-feedback">
+                                    {message && <p className="msg-success">{message}</p>}
+                                    {error && <p className="msg-error">{error}</p>}
+                                </div>
+                            </div>
                         </div>
-                        <div className="history-modal__actions notes-modal-export">
-                            <span>{selectedIds.length} selected</span>
-                            <button type="button" className="modal-export-btn" onClick={handleExportSelected}>
-                                Export Selected PDF
-                            </button>
-                        </div>
-                    </article>
-                </section>
-            )}
+                    </div>
+                </div>
+
+                {/* EXPORT OPTION BELOW EVERYTHING */}
+                <div className="notes-export-footer card-glass">
+                    <div className="export-info">
+                        <span className="material-symbols-outlined">file_download</span>
+                        <p>{selectedIds.length} questions selected for export</p>
+                    </div>
+                    <button className="export-btn" onClick={handleExportSelected} disabled={!selectedIds.length}>
+                        DOWNLOAD SELECTED AS PDF
+                    </button>
+                </div>
+            </section>
         </main>
     )
 }

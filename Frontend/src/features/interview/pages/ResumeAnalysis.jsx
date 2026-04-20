@@ -20,6 +20,7 @@ const ResumeAnalysis = () => {
     const navigate = useNavigate()
 
     useEffect(() => {
+        document.title = "Resume Analysis | IntelliPrep"
         getReports()
     }, [])
 
@@ -192,7 +193,6 @@ const ResumeAnalysis = () => {
                                             </div>
                                             <div className="plan-actions">
                                                 <button onClick={() => navigate(`/interview/${report._id}`)}><span className="material-symbols-outlined">visibility</span></button>
-                                                <button><span className="material-symbols-outlined">ios_share</span></button>
                                             </div>
                                         </li>
                                     )})}
@@ -238,8 +238,9 @@ const ResumeAnalysis = () => {
                                         <button 
                                             type="button" 
                                             onClick={() => navigate(`/interview/${report._id}`)}
-                                            style={{ border: '1px solid rgba(143, 180, 210, 0.3)', background: 'rgba(97, 137, 169, 0.2)', color: '#eaf3fb', borderRadius: '0.35rem', padding: '0.28rem 0.55rem', fontSize: '0.72rem', cursor: 'pointer' }}>
-                                            View Plan
+                                            aria-label="View Plan"
+                                            style={{ border: '1px solid rgba(143, 180, 210, 0.3)', background: 'rgba(97, 137, 169, 0.2)', color: '#eaf3fb', borderRadius: '0.35rem', padding: '0.28rem 0.55rem', fontSize: '0.72rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>visibility</span>
                                         </button>
                                     </div>
                                 </div>

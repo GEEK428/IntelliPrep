@@ -1,7 +1,28 @@
 const { Router } = require('express')
+const { z } = require("zod")
 const authController = require("../controllers/auth.controller")
 const authMiddleware = require("../middlewares/auth.middleware")
 const forgotPasswordRateLimit = require("../middlewares/forgotPasswordRateLimit.middleware")
+const validate = require("../middlewares/validate.middleware")
+
+// ── Zod schemas for input validation ────────────────────────────────
+const passwordRule = z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password needs an uppercase letter")
+    .regex(/[a-z]/, "Password needs a lowercase letter")
+    .regex(/\d/, "Password needs a number")
+    .regex(/[^A-Za-z\d]/, "Password needs a special character")
+
+const registerSchema = z.object({
+    username: z.string().min(1, "Username is required").max(30),
+    email: z.string().email("Invalid email format"),
+    password: passwordRule
+})
+
+const loginSchema = z.object({
+    email: z.string().email("Invalid email format"),
+    password: z.string().min(1, "Password is required")
+})
 
 const authRouter = Router()
 
@@ -10,7 +31,7 @@ const authRouter = Router()
  * @description Register a new user
  * @access Public
  */
-authRouter.post("/register", authController.registerUserController)
+authRouter.post("/register", validate(registerSchema), authController.registerUserController)
 
 
 /**
@@ -18,7 +39,7 @@ authRouter.post("/register", authController.registerUserController)
  * @description login user with email and password
  * @access Public
  */
-authRouter.post("/login", authController.loginUserController)
+authRouter.post("/login", validate(loginSchema), authController.loginUserController)
 
 /**
  * @route POST /api/auth/google

@@ -1,10 +1,42 @@
 const express = require("express")
 const cookieParser = require("cookie-parser")
 const cors = require("cors")
+const helmet = require("helmet")
+const compression = require("compression")
+const { rateLimit } = require("express-rate-limit")
+const requestLogger = require("./middlewares/logger.middleware")
 
 const app = express()
 
-app.use(express.json())
+// Security & Performance Middlewares
+app.use(helmet())
+app.use(compression())
+app.use(requestLogger)
+
+// Rate Limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    limit: 100, // Limit each IP to 100 requests per windowMs
+    standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    message: { message: "Too many requests from this IP, please try again after 15 minutes." }
+})
+app.use(limiter)
+
+// Stricter limit specifically for AI routes — they're expensive
+const aiLimiter = rateLimit({
+    windowMs: 60 * 1000,  // 1 minute
+    limit: 5,             // max 5 AI calls per minute per IP
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { message: "AI request limit reached. Please wait a moment." }
+})
+
+// Apply strict limit to AI routes specifically
+app.use("/api/interview/generate", aiLimiter)
+app.use("/api/notes/ai-answer", aiLimiter)
+
+app.use(express.json({ limit: "2mb" }))
 app.use(cookieParser())
 const allowedOrigins = [
     "http://localhost:5173",

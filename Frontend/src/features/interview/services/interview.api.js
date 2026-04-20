@@ -55,8 +55,10 @@ export const getInterviewInsights = async (interviewId) => {
 
     return response.data
 }
-export const getAllInterviewReports = async () => {
-    const response = await api.get("/api/interview/")
+export const getAllInterviewReports = async ({ page = 1, limit = 10 } = {}) => {
+    const response = await api.get("/api/interview/", {
+        params: { page, limit }
+    })
     return response.data
 }
 

@@ -272,6 +272,7 @@ const ResumeOptimizer = () => {
                             <button
                                 type="button"
                                 disabled={!latestReportId}
+                                className="preview-download-btn"
                                 onClick={() => latestReportId && triggerDownload({ reportId: latestReportId, fileName: latestFileName || `resume_${latestReportId}.pdf` })}
                             >
                                 Download

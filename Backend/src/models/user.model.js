@@ -93,6 +93,11 @@ const userSchema = new mongoose.Schema({
             type: Boolean,
             default: false
         }
+    },
+
+    timezone: {
+        type: String,
+        default: "Asia/Kolkata"  // keeps current behaviour as default
     }
 })
 

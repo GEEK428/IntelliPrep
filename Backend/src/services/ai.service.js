@@ -1,6 +1,8 @@
-const { GoogleGenAI } = require("@google/genai")
+ï»¿const { GoogleGenAI } = require("@google/genai")
 const { z } = require("zod")
 const { zodToJsonSchema } = require("zod-to-json-schema")
+const crypto = require("crypto")
+const { getCache, setCache } = require("../utils/redis")
 let puppeteerLib = null
 
 const ai = new GoogleGenAI({
@@ -9,11 +11,14 @@ const ai = new GoogleGenAI({
 
 const RESUME_AI_MODEL = "gemini-3-flash-preview"
 
+function generateCacheKey(prefix, data) {
+    const hash = crypto.createHash("md5").update(JSON.stringify(data)).digest("hex")
+    return `${prefix}:${hash}`
+}
+
 function extractResponseText(response) {
     if (!response) return ""
-
     if (typeof response.text === "string") return response.text
-
     if (typeof response.text === "function") {
         try {
             return response.text() || ""
@@ -21,68 +26,63 @@ function extractResponseText(response) {
             return ""
         }
     }
-
     return response?.candidates?.[0]?.content?.parts?.map((part) => part?.text || "").join("") || ""
 }
 
 function safeParseJson(rawText = "") {
     const text = String(rawText || "").trim()
-    if (!text) {
-        throw new Error("AI returned an empty response.")
-    }
-
+    if (!text) throw new Error("AI returned an empty response.")
     try {
         return JSON.parse(text)
     } catch (err) {
         const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
-        if (fenced?.[1]) {
-            return JSON.parse(fenced[1].trim())
-        }
+        if (fenced?.[1]) return JSON.parse(fenced[1].trim())
         throw new Error("AI returned malformed JSON.")
     }
 }
 
-async function generateStructuredJson({ prompt, schema }) {
-    if (!process.env.GOOGLE_GENAI_API_KEY) {
-        throw new Error("GOOGLE_GENAI_API_KEY is missing.")
+async function generateStructuredJson({ prompt, schema, cachePrefix = null, cacheData = null }) {
+    // 1. Check Redis Cache first
+    let cacheKey = null
+    if (cachePrefix && cacheData) {
+        cacheKey = generateCacheKey(cachePrefix, cacheData)
+        const cached = await getCache(cacheKey)
+        if (cached) {
+            console.log(`[AI-Cache] HIT: ${cacheKey}`)
+            return cached
+        }
     }
 
-    const response = await ai.models.generateContent({
-        model: RESUME_AI_MODEL,
-        contents: prompt,
-        config: {
+    if (!process.env.GOOGLE_GENAI_API_KEY) throw new Error("GOOGLE_GENAI_API_KEY is missing.")
+    
+    console.log(`[AI-Cache] MISS: Calling Gemini for prompt...`)
+    const response = await ai.getGenerativeModel({ model: RESUME_AI_MODEL }).generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
             responseMimeType: "application/json",
             responseSchema: zodToJsonSchema(schema),
         }
     })
-
-    const rawText = extractResponseText(response)
+    
+    const rawText = extractResponseText(response.response)
     const parsed = safeParseJson(rawText)
-    return schema.parse(parsed)
+    const validated = schema.parse(parsed)
+
+    // 2. Save to Redis for future hits
+    if (cacheKey) {
+        await setCache(cacheKey, validated, 43200) // Cache for 12 hours
+    }
+
+    return validated
 }
 
 const interviewReportSchema = z.object({
-    matchScore: z.number().describe("A score between 0 and 100 indicating how well the candidate profile matches the job description"),
-    technicalQuestions: z.array(z.object({
-        question: z.string(),
-        intention: z.string(),
-        answer: z.string()
-    })),
-    behavioralQuestions: z.array(z.object({
-        question: z.string(),
-        intention: z.string(),
-        answer: z.string()
-    })),
-    skillGaps: z.array(z.object({
-        skill: z.string(),
-        severity: z.enum(["low", "medium", "high"])
-    })),
+    matchScore: z.number(),
+    technicalQuestions: z.array(z.object({ question: z.string(), intention: z.string(), answer: z.string() })),
+    behavioralQuestions: z.array(z.object({ question: z.string(), intention: z.string(), answer: z.string() })),
+    skillGaps: z.array(z.object({ skill: z.string(), severity: z.enum(["low", "medium", "high"]) })),
     topSkills: z.array(z.string()),
-    preparationPlan: z.array(z.object({
-        day: z.number(),
-        focus: z.string(),
-        tasks: z.array(z.string())
-    })),
+    preparationPlan: z.array(z.object({ day: z.number(), focus: z.string(), tasks: z.array(z.string()) })),
     title: z.string(),
 })
 
@@ -91,176 +91,103 @@ const noteAnswerSchema = z.object({
     answerHtml: z.string()
 })
 
-const jobSkillsSchema = z.object({
-    requiredSkills: z.array(z.string())
-})
-
-const onePageResumeSchema = z.object({
-    resumeText: z.string()
+const premiumResumeSchema = z.object({
+    header: z.object({
+        fullName: z.string(),
+        email: z.string(),
+        phone: z.string(),
+        location: z.string(),
+        links: z.array(z.object({ label: z.string(), url: z.string() })).default([])
+    }),
+    education: z.array(z.object({
+        institution: z.string(),
+        degree: z.string(),
+        duration: z.string(),
+        location: z.string(),
+        details: z.array(z.string()).optional()
+    })),
+    experience: z.array(z.object({
+        company: z.string(),
+        role: z.string(),
+        duration: z.string(),
+        location: z.string(),
+        points: z.array(z.string())
+    })).default([]),
+    projects: z.array(z.object({
+        title: z.string(),
+        techStack: z.string().optional(),
+        duration: z.string(),
+        link: z.string().optional(),
+        points: z.array(z.string())
+    })).default([]),
+    technicalSkills: z.array(z.object({
+        category: z.string(),
+        skills: z.string()
+    })),
+    achievements: z.array(z.string()).default([]),
+    interests: z.array(z.string()).default([])
 })
 
 async function generateInterviewReport({ resume, selfDescription, jobDescription }) {
-    const prompt = `Generate an interview report for a candidate with the following details:\nResume: ${resume}\nSelf Description: ${selfDescription}\nJob Description: ${jobDescription}\nReturn topSkills as 3 to 6 concise skill names that best match this job description.`
+    const prompt = `Generate a high-quality, comprehensive interview analysis report.
+Job Context: ${jobDescription}
+Candidate Details: ${resume} ${selfDescription}
 
-    return generateStructuredJson({
-        prompt,
-        schema: interviewReportSchema
+Requirements:
+1. Calculate a realistic matchScore (0-100).
+2. Generate EXACTLY 4 technical questions tailored to the role.
+3. Generate EXACTLY 4 behavioral questions.
+4. Provide a PROPER 7-day preparation plan.
+5. Identify skill gaps and top skills accurately.`
+
+    return generateStructuredJson({ 
+        prompt, 
+        schema: interviewReportSchema, 
+        cachePrefix: "report", 
+        cacheData: { resume, selfDescription, jobDescription } 
     })
-}
-
-function normalizeSkillName(skill = "") {
-    return String(skill || "").trim().replace(/[.,;:]+$/g, "")
-}
-
-function dedupeSkills(skills = []) {
-    const seen = new Set()
-    const out = []
-    for (const raw of skills) {
-        const skill = normalizeSkillName(raw)
-        if (!skill) continue
-        const key = skill.toLowerCase()
-        if (seen.has(key)) continue
-        seen.add(key)
-        out.push(skill)
-    }
-    return out
-}
-
-function extractPresentSkillsFromText(resumeText = "") {
-    const text = String(resumeText || "")
-    const parts = text.split(/[\n,|]/g).map((item) => normalizeSkillName(item)).filter(Boolean)
-    return dedupeSkills(parts)
-}
-
-function injectMissingSkillsIntoResumeText(resumeText = "", requiredSkills = []) {
-    const text = String(resumeText || "").trim()
-    const lines = text.split(/\r?\n/)
-
-    const existingSkills = extractPresentSkillsFromText(text).map((s) => s.toLowerCase())
-    const missing = dedupeSkills(requiredSkills).filter((skill) => !existingSkills.includes(skill.toLowerCase()))
-
-    if (!missing.length) {
-        return text
-    }
-
-    const headingRegex = /^\s*(skills?|technical skills?|core skills?|technologies?)\s*:?\s*$/i
-    const headingIndex = lines.findIndex((line) => headingRegex.test(line.trim()))
-
-    if (headingIndex >= 0) {
-        let insertAt = headingIndex + 1
-        while (
-            insertAt < lines.length &&
-            lines[insertAt].trim() &&
-            !/^[A-Z][A-Za-z\s/&-]{2,35}:?$/.test(lines[insertAt].trim())
-        ) {
-            insertAt += 1
-        }
-        lines.splice(insertAt, 0, `Added for target role: ${missing.join(", ")}`)
-        return lines.join("\n").trim()
-    }
-
-    return `${text}\n\nSkills\n${missing.join(", ")}`.trim()
-}
-
-function isLikelyOnePageResume(resumeText = "") {
-    const words = String(resumeText || "").split(/\s+/).filter(Boolean).length
-    const lines = String(resumeText || "").split(/\r?\n/).filter((line) => line.trim()).length
-    return words <= 650 && lines <= 90
 }
 
 function escapeHtml(text = "") {
-    return String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
+    return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
 }
 
-function buildBasicResumeHtmlFromText(resumeText = "") {
-    const lines = String(resumeText || "")
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter(Boolean)
+function buildPremiumResumeHtml(data) {
+    const { header, education, experience, projects, technicalSkills, achievements, interests } = data;
+    const linksHtml = (header.links || []).map(link => `<a href="${link.url}">${link.label}</a>`).join(" | ");
 
-    const content = lines.map((line) => {
-        const isHeading = /^[A-Z][A-Za-z\s/&-]{2,40}:?$/.test(line)
-        const isBullet = /^[-*•]\s+/.test(line)
+    const section = (title, content) => content ? `<section><h1>${title}</h1>${content}</section>` : "";
 
-        if (isHeading) {
-            return `<h2>${escapeHtml(line.replace(/:$/, ""))}</h2>`
-        }
-        if (isBullet) {
-            return `<p class=\"bullet\">${escapeHtml(line.replace(/^[-*•]\s+/, ""))}</p>`
-        }
-        return `<p>${escapeHtml(line)}</p>`
-    }).join("\n")
+    const educationHtml = education.map(edu => `
+        <div class="item">
+            <div class="row"><span class="main-text">${escapeHtml(edu.institution)}</span><span class="side-text">${escapeHtml(edu.duration)}</span></div>
+            <div class="row"><span class="sub-text">${escapeHtml(edu.degree)}</span><span class="side-text italic">${escapeHtml(edu.location)}</span></div>
+            ${edu.details && edu.details.length > 0 ? `<ul>${edu.details.map(d => `<li>${escapeHtml(d)}</li>`).join("")}</ul>` : ""}
+        </div>`).join("");
 
-    return `<!DOCTYPE html>
-<html>
-<head>
-<meta charset=\"UTF-8\">
-<style>
-  @page { size: A4; margin: 10mm; }
-  body {
-    font-family: Arial, sans-serif;
-    font-size: 9pt;
-    line-height: 1.28;
-    color: #111;
-    margin: 0;
-    padding: 0;
-    -webkit-print-color-adjust: exact;
-  }
-  h2 {
-    font-size: 10pt;
-    margin: 8pt 0 3pt;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    border-bottom: 1px solid #222;
-    padding-bottom: 2pt;
-  }
-  p {
-    margin: 2pt 0;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-  p.bullet {
-    padding-left: 10pt;
-    text-indent: -8pt;
-  }
-</style>
-</head>
-<body>
-${content}
-</body>
-</html>`
-}
+    const experienceHtml = experience.map(exp => `
+        <div class="item">
+            <div class="row"><span class="main-text">${escapeHtml(exp.company)}</span><span class="side-text">${escapeHtml(exp.duration)}</span></div>
+            <div class="row"><span class="sub-text">${escapeHtml(exp.role)}</span><span class="side-text italic">${escapeHtml(exp.location)}</span></div>
+            <ul>${exp.points.map(p => `<li>${escapeHtml(p)}</li>`).join("")}</ul>
+        </div>`).join("");
 
-async function extractRequiredSkillsFromJobDescription(jobDescription = "") {
-    const prompt = `Extract required technical/job skills from this job description.\n\nJob Description:\n${jobDescription}\n\nRules:\n1. Return concise skill names only.\n2. No explanations.\n3. Prefer concrete technologies/frameworks/tools over soft skills.\n4. Maximum 12 skills.`
+    const projectsHtml = projects.map(proj => `
+        <div class="item">
+            <div class="row">
+                <span class="main-text">${escapeHtml(proj.title)} ${proj.techStack ? `<span class="italic normal">| ${escapeHtml(proj.techStack)}</span>` : ""}</span>
+                <span class="side-text">${escapeHtml(proj.duration)} ${proj.link ? `| <a href="${proj.link}">Link</a>` : ""}</span>
+            </div>
+            <ul>${proj.points.map(p => `<li>${escapeHtml(p)}</li>`).join("")}</ul>
+        </div>`).join("");
 
-    const response = await generateStructuredJson({
-        prompt,
-        schema: jobSkillsSchema
-    })
+    const skillsHtml = '<div class="skills-grid">' + technicalSkills.map(g => `<div><strong>${escapeHtml(g.category)}:</strong> ${escapeHtml(g.skills)}</div>`).join("") + '</div>';
 
-    return dedupeSkills(response?.requiredSkills || []).slice(0, 12)
-}
-
-async function condenseResumeToOnePage({ resumeText, requiredSkills, jobDescription }) {
-    const prompt = `Rewrite this resume to one page while preserving factual content.\n\nResume Text:\n${resumeText}\n\nRequired Job Skills:\n${requiredSkills.join(", ") || "(none)"}\n\nJob Description:\n${jobDescription}\n\nRules:\n1. Do not invent any facts, dates, companies, projects, or metrics.\n2. Keep core achievements and responsibilities.\n3. Keep or create a Skills section containing required skills.\n4. Use compact section headings and short bullets.\n5. Remove repetition and verbose lines only.`
-
-    const response = await generateStructuredJson({
-        prompt,
-        schema: onePageResumeSchema
-    })
-
-    return String(response?.resumeText || "").trim()
+    return "<!DOCTYPE html><html><head><meta charset='UTF-8'><style>@page { size: A4; margin: 10mm; } body { font-family: 'Times New Roman', Times, serif; font-size: 10pt; line-height: 1.25; color: #111; margin: 0; padding: 0; } header { text-align: center; margin-bottom: 8pt; } header h1 { font-size: 24pt; margin: 0; font-weight: normal; } header p { margin: 2pt 0; font-size: 10pt; } header a { color: #111; text-decoration: underline; margin: 0 4pt; } section { margin-top: 10pt; } section h1 { font-size: 11pt; font-weight: bold; border-bottom: 1px solid #111; margin: 0 0 5pt; padding-bottom: 1pt; text-transform: uppercase; } .item { margin-bottom: 6pt; } .row { display: flex; justify-content: space-between; align-items: baseline; } .main-text { font-weight: bold; } .sub-text { font-style: italic; } ul { margin: 2pt 0 0 15pt; padding: 0; list-style-type: disc; } li { margin-bottom: 1pt; text-align: justify; }</style></head><body><header><h1>" + escapeHtml(header.fullName) + "</h1><p>" + escapeHtml(header.location) + " | " + escapeHtml(header.phone) + " | " + escapeHtml(header.email) + "</p><div class='links'>" + linksHtml + "</div></header>" + section("EDUCATION", educationHtml) + section("EXPERIENCE", experienceHtml) + section("PROJECTS", projectsHtml) + section("TECHNICAL SKILLS", skillsHtml) + (achievements.length ? section("ACHIEVEMENTS", "<ul>" + achievements.map(a => "<li>" + escapeHtml(a) + "</li>").join("") + "</ul>") : "") + (interests.length ? section("INTERESTS", "<ul><li>" + escapeHtml(interests.join(", ")) + "</li></ul>") : "") + "</body></html>";
 }
 
 async function generatePdfFromHtml(htmlContent) {
-    if (!puppeteerLib) {
-        puppeteerLib = require("puppeteer")
-    }
-
+    if (!puppeteerLib) puppeteerLib = require("puppeteer")
     let browser
     try {
         browser = await puppeteerLib.launch({
@@ -270,51 +197,35 @@ async function generatePdfFromHtml(htmlContent) {
         })
         const page = await browser.newPage()
         await page.setContent(htmlContent, { waitUntil: "networkidle0" })
-        const pdfBuffer = await page.pdf({
-            format: "A4",
-            margin: { top: "10mm", bottom: "10mm", left: "10mm", right: "10mm" },
-            printBackground: true
-        })
-        return pdfBuffer
+        return await page.pdf({ format: "A4", margin: { top: "10mm", bottom: "10mm", left: "10mm", right: "10mm" }, printBackground: true })
     } finally {
         if (browser) await browser.close()
     }
 }
 
 async function generateResumePdf({ resume, selfDescription, jobDescription }) {
-    const sourceResumeText = String(resume || selfDescription || "").trim()
-    if (!sourceResumeText) {
-        throw new Error("Resume text is empty. Upload a valid resume to continue.")
-    }
+    const source = String(resume || selfDescription || "").trim()
+    if (!source) throw new Error("Resume content missing.")
 
-    const requiredSkills = await extractRequiredSkillsFromJobDescription(jobDescription || "")
-    const resumeWithSkills = injectMissingSkillsIntoResumeText(sourceResumeText, requiredSkills)
+    const prompt = "Convert this candidate profile into a high-quality professional resume JSON. \nJob context: " + (jobDescription || "N/A") + "\nProfile: " + source + "\n\nRules:\n1. Extract Details and all links.\n2. Standard Academic Order.\n3. STAR Method points.\n4. No inventions.";
 
-    const finalResumeText = isLikelyOnePageResume(resumeWithSkills)
-        ? resumeWithSkills
-        : await condenseResumeToOnePage({
-            resumeText: resumeWithSkills,
-            requiredSkills,
-            jobDescription: jobDescription || ""
-        })
-
-    const html = buildBasicResumeHtmlFromText(finalResumeText)
-    return generatePdfFromHtml(html)
+    const data = await generateStructuredJson({ 
+        prompt, 
+        schema: premiumResumeSchema,
+        cachePrefix: "resume-json",
+        cacheData: { resume, selfDescription, jobDescription } 
+    })
+    return generatePdfFromHtml(buildPremiumResumeHtml(data))
 }
 
-async function generateNoteAnswer({ domain, subdomain, question, sourceTag = "", difficulty = "medium" }) {
-    const prompt = `Generate a concise but strong interview answer for this question.\n\nDomain: ${domain}\nSubdomain: ${subdomain}\nDifficulty: ${difficulty}\nSource: ${sourceTag || "N/A"}\nQuestion: ${question}\n\nInstructions:\n- Keep it practical and interviewer-ready.\n- Use clear structure: key idea, approach, examples, common mistakes.\n- If coding-related, include short pseudocode/code-style explanation.\n- Avoid very long output.\n- Return both answerText and answerHtml.`
-
-    return generateStructuredJson({
-        prompt,
-        schema: noteAnswerSchema
+async function generateNoteAnswer({ domain, subdomain, question, sourceTag = "" }) {
+    const prompt = "Generate interview answer for: " + question + "\nDomain: " + domain;
+    return generateStructuredJson({ 
+        prompt, 
+        schema: noteAnswerSchema,
+        cachePrefix: "note",
+        cacheData: { domain, subdomain, question }
     })
 }
 
-module.exports = {
-    generateInterviewReport,
-    generateResumePdf,
-    generatePdfFromHtml,
-    generateNoteAnswer
-}
-
+module.exports = { generateInterviewReport, generateResumePdf, generatePdfFromHtml, generateNoteAnswer }
