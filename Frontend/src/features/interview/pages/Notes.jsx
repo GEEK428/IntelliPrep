@@ -226,6 +226,18 @@ const Notes = () => {
         setIsDirty(true)
     }
 
+    const execHighlight = (color) => {
+        document.execCommand("hiliteColor", false, color)
+        setAnswer(editorRef.current?.innerText || "")
+        setIsDirty(true)
+    }
+
+    const execFontColor = (color) => {
+        document.execCommand("foreColor", false, color)
+        setAnswer(editorRef.current?.innerText || "")
+        setIsDirty(true)
+    }
+
     const subdomains = DOMAIN_MAP[domain] || []
     const filterSubdomainOptions = filterDomain === "all" ? COMMON_SUBDOMAINS : (DOMAIN_MAP[filterDomain] || [])
 
@@ -256,6 +268,9 @@ const Notes = () => {
                         <div className="column-head">
                             <h2>Questions ({totalCount})</h2>
                             <div className="column-head-actions">
+                                <button className="filter-chip" onClick={handleExportSelected} disabled={!selectedIds.length}>
+                                    <span className="material-symbols-outlined">download</span> Export
+                                </button>
                                 <button className="filter-chip icon-only" onClick={() => setShowFilterOptions(!showFilterOptions)}>
                                     <span className="material-symbols-outlined">filter_list</span>
                                 </button>
@@ -351,11 +366,8 @@ const Notes = () => {
                             <button disabled={page >= totalPages} onClick={() => { setPage(p => p + 1); loadNotes(page + 1) }}>Next</button>
                         </div>
 
-                        <div className="notes-export-inline card-glass">
+                        <div className="notes-bottom-bar card-glass">
                             <p>{selectedIds.length} selected</p>
-                            <button className="export-btn-compact" onClick={handleExportSelected}>
-                                <span className="material-symbols-outlined">download</span> EXPORT PDF
-                            </button>
                         </div>
                     </div>
 
@@ -427,6 +439,10 @@ const Notes = () => {
                                     <div className="rich-editor-wrap">
                                         <div className="rich-toolbar">
                                             {TOOLBAR_ACTIONS.map(a => <button key={a.label} onClick={() => exec(a.command)}>{a.label}</button>)}
+                                            <button className="hl-green" onClick={() => execHighlight('#a8f0c0')} title="Highlight Green">🟢</button>
+                                            <button className="hl-yellow" onClick={() => execHighlight('#fff59d')} title="Highlight Yellow">🟡</button>
+                                            <button className="fc-green" onClick={() => execFontColor('#2e7d32')} title="Green Text">A</button>
+                                            <button className="fc-yellow" onClick={() => execFontColor('#f9a825')} title="Yellow Text">A</button>
                                             <button onClick={handleGenerateAiAnswer} className="ai-tool" disabled={aiLoading}>
                                                 {aiLoading ? "Thinking..." : "AI Answer"}
                                             </button>

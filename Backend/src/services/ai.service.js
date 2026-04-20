@@ -277,33 +277,33 @@ function buildPremiumResumeHtml(data) {
 <head>
     <meta charset="UTF-8">
     <style>
-        @page { size: A4; margin: 0.4in; }
+        @page { size: A4; margin: 0.3in 0.4in; }
         body { 
             font-family: "Times New Roman", Times, serif; 
             font-size: 10pt; 
-            line-height: 1.15; 
+            line-height: 1.1; 
             color: #000; 
             margin: 0; 
             padding: 0;
         }
         .container { width: 100%; }
-        header { text-align: center; margin-bottom: 8pt; }
-        header h1 { font-size: 28pt; margin: 0; font-weight: normal; }
-        header p { margin: 2pt 0; font-size: 10pt; }
-        header .links { margin-top: 4pt; }
-        header a { color: #000; text-decoration: underline; margin: 0; font-size: 10pt; }
+        header { text-align: center; margin-bottom: 4pt; }
+        header h1 { font-size: 24pt; margin: 0; font-weight: normal; }
+        header p { margin: 1pt 0; font-size: 9pt; }
+        header .links { margin-top: 2pt; }
+        header a { color: #000; text-decoration: underline; margin: 0; font-size: 9pt; }
         
-        .section { margin-top: 12pt; }
+        .section { margin-top: 6pt; }
         .section-title { 
-            font-size: 11pt; 
+            font-size: 10pt; 
             font-weight: bold; 
             text-transform: uppercase; 
             border-bottom: 1px solid #000; 
-            margin: 0 0 5pt; 
+            margin: 0 0 3pt; 
             padding-bottom: 1pt; 
         }
         
-        .entry { margin-bottom: 6pt; }
+        .entry { margin-bottom: 3pt; }
         .entry-header, .entry-subheader { 
             display: flex; 
             justify-content: space-between; 
@@ -314,8 +314,8 @@ function buildPremiumResumeHtml(data) {
         .normal { font-weight: normal; }
         .right { text-align: right; }
         
-        ul { margin: 2pt 0 0 16pt; padding: 0; list-style-type: disc; }
-        li { margin-bottom: 1pt; text-align: justify; }
+        ul { margin: 1pt 0 0 14pt; padding: 0; list-style-type: disc; }
+        li { margin-bottom: 0pt; text-align: justify; font-size: 9.5pt; }
         p { margin: 0; }
     </style>
 </head>
@@ -365,11 +365,14 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
     Profile: ${source}
 
     RULES:
-    1. STRICT PHOTO ALIGNMENT: Centered header, Bold capitalized sections with line below.
-    2. CONTENT: Star Method points, Standard Academic order.
-    3. SKILLS INJECTION: Automatically identify and ADD missing technical skills that are required for the "Target Job" but missing in "Profile", seamlessly integrating them into the Technical Skills section.
-    4. Bullet points for all projects and experience.
-    5. Sections must be: EDUCATION, PROJECTS, TECHNICAL SKILLS, ACHIEVEMENTS, EXPERIENCE, INTERESTS.
+    1. STRICT ONE PAGE LIMIT: The resume MUST fit on a single A4 page. Be concise. Use maximum 3 bullet points per project/experience. Keep achievements to 3-4 items max.
+    2. DO NOT include a "Relevant Coursework" section. Never.
+    3. Centered header, Bold capitalized sections with line below.
+    4. CONTENT: Star Method points, Standard Academic order.
+    5. SKILLS INJECTION: Automatically identify and ADD missing technical skills that are required for the "Target Job" but missing in "Profile", seamlessly integrating them into the Technical Skills section.
+    6. Bullet points for all projects and experience.
+    7. Sections must be: EDUCATION, PROJECTS, TECHNICAL SKILLS, ACHIEVEMENTS, EXPERIENCE, INTERESTS.
+    8. Keep bullet points concise (max 1.5 lines each) to fit everything on one page.
     Return ONLY raw JSON matching the schema format:
     {
       "header": { "fullName": string, "email": string, "phone": string, "location": string, "links": [{"label": string, "url": string}] },

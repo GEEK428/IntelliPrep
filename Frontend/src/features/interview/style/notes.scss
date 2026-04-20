@@ -87,6 +87,13 @@
     font-weight: 600;
 }
 
+.column-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
 .filter-chip {
     padding: 4px 8px;
     font-size: 0.7rem;
@@ -95,9 +102,19 @@
     border: 1px solid rgba(255,255,255,0.1);
     color: #9fd0f4;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 4px;
+    white-space: nowrap;
+
+    .material-symbols-outlined {
+        font-size: 1rem;
+    }
+
+    &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
 }
 
 .filter-chip.active { background: #6fb2e3; color: white; border: none; }
@@ -205,6 +222,38 @@
     font-weight: bold;
 }
 
+.rich-toolbar .hl-green {
+    font-size: 0.65rem;
+    padding: 2px 5px;
+    border-radius: 3px;
+    background: rgba(168, 240, 192, 0.2);
+    cursor: pointer;
+}
+
+.rich-toolbar .hl-yellow {
+    font-size: 0.65rem;
+    padding: 2px 5px;
+    border-radius: 3px;
+    background: rgba(255, 245, 157, 0.2);
+    cursor: pointer;
+}
+
+.rich-toolbar .fc-green {
+    color: #4caf50;
+    font-weight: 800;
+    font-size: 0.75rem;
+    padding: 2px 5px;
+    cursor: pointer;
+}
+
+.rich-toolbar .fc-yellow {
+    color: #f9a825;
+    font-weight: 800;
+    font-size: 0.75rem;
+    padding: 2px 5px;
+    cursor: pointer;
+}
+
 .custom-editor {
     background: rgba(15, 23, 31, 0.8);
     border: 1px solid rgba(146, 173, 196, 0.2);
@@ -261,37 +310,18 @@
     }
 }
 
-.notes-export-inline {
+.notes-bottom-bar {
     margin-top: 0.5rem;
-    padding: 0.8rem;
+    padding: 0.5rem 0.8rem;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-}
 
-.notes-export-inline p {
-    font-size: 0.7rem;
-    color: rgba(194, 214, 233, 0.7);
-    margin: 0;
-}
-
-.export-btn-compact {
-    background: rgba(111, 178, 227, 0.15);
-    border: 1px solid #6fb2e3;
-    color: #9fd0f4;
-    padding: 6px 12px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.export-btn-compact:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+    p {
+        font-size: 0.7rem;
+        color: rgba(194, 214, 233, 0.7);
+        margin: 0;
+    }
 }
 
 /* Glass effect */

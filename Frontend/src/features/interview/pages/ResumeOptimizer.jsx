@@ -214,10 +214,6 @@ const ResumeOptimizer = () => {
                             <button className="action-btn secondary" disabled={!previewUrl}>
                                 <span className="material-symbols-outlined">add_to_drive</span> SAVE TO DRIVE
                             </button>
-                            <button className="action-btn primary" disabled={!latestReportId} 
-                                onClick={() => triggerDownload({ reportId: latestReportId, fileName: latestFileName })}>
-                                <span className="material-symbols-outlined">download</span> DOWNLOAD PDF
-                            </button>
                         </div>
                     </article>
                 </section>
