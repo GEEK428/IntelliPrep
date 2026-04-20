@@ -53,50 +53,81 @@ function safeParseJson(rawText = "") {
     }
 }
 
+const FALLBACK_MODEL = "gemini-2.5-flash-preview-05-20";
+const MAX_RETRIES = 3;
+
+async function callAiWithRetry(prompt, schema) {
+    const ai = getAi();
+    const models = [RESUME_AI_MODEL, FALLBACK_MODEL];
+    let lastError = null;
+
+    for (const model of models) {
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                console.log(`[AI-Service] Trying ${model} (attempt ${attempt}/${MAX_RETRIES})...`);
+                const response = await ai.models.generateContent({
+                    model,
+                    contents: [{ role: "user", parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: zodToJsonSchema(schema),
+                    }
+                });
+
+                const rawText = extractResponseText(response);
+                if (!rawText) throw new Error("Empty response from AI model");
+                console.log(`[AI-Service] Raw (${model}): ${rawText.slice(0, 150)}...`);
+
+                const parsed = safeParseJson(rawText);
+                const validated = schema.parse(parsed);
+                console.log(`[AI-Service] Success with ${model} on attempt ${attempt}`);
+                return validated;
+            } catch (err) {
+                lastError = err;
+                const msg = err.message || "";
+                const isRetryable = msg.includes("503") || msg.includes("UNAVAILABLE") || msg.includes("overloaded") || msg.includes("high demand") || msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED");
+                console.warn(`[AI-Service] ${model} attempt ${attempt} failed: ${msg.slice(0, 120)}`);
+                
+                if (!isRetryable) break; // don't retry non-transient errors on this model
+                if (attempt < MAX_RETRIES) {
+                    const delay = attempt * 2000; // 2s, 4s
+                    console.log(`[AI-Service] Waiting ${delay}ms before retry...`);
+                    await new Promise(r => setTimeout(r, delay));
+                }
+            }
+        }
+        console.log(`[AI-Service] All attempts exhausted for ${model}, trying next model...`);
+    }
+
+    throw lastError || new Error("All AI models failed.");
+}
+
 async function generateStructuredJson({ prompt, schema, cachePrefix = null, cacheData = null }) {
     try {
         // 1. Check Redis Cache first
-        let cacheKey = null
+        let cacheKey = null;
         if (cachePrefix && cacheData) {
-            cacheKey = generateCacheKey(cachePrefix, cacheData)
-            const cached = await getCache(cacheKey)
+            cacheKey = generateCacheKey(cachePrefix, cacheData);
+            const cached = await getCache(cacheKey);
             if (cached) {
-                console.log(`[AI-Cache] HIT: ${cacheKey}`)
-                return cached
+                console.log(`[AI-Cache] HIT: ${cacheKey}`);
+                return cached;
             }
         }
 
-        if (!process.env.GOOGLE_GENAI_API_KEY) throw new Error("GOOGLE_GENAI_API_KEY is missing.")
-        
-        console.log(`[AI-Service] MISS for ${RESUME_AI_MODEL}. Generating...`)
-        
-        // NEW SDK SYNTAX (for @google/genai v1.46.0+)
-        const ai = getAi();
-        const response = await ai.models.generateContent({
-            model: RESUME_AI_MODEL,
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: {
-                responseMimeType: "application/json",
-                responseSchema: zodToJsonSchema(schema),
-            }
-        })
-        
-        const rawText = extractResponseText(response)
-        if (!rawText) throw new Error("Empty response from AI model")
-        console.log(`[AI-Service] Raw Response: ${rawText.slice(0, 200)}...`)
+        if (!process.env.GOOGLE_GENAI_API_KEY) throw new Error("GOOGLE_GENAI_API_KEY is missing.");
 
-        const parsed = safeParseJson(rawText)
-        const validated = schema.parse(parsed)
+        const validated = await callAiWithRetry(prompt, schema);
 
         // 2. Save to Redis for future hits
         if (cacheKey) {
-            await setCache(cacheKey, validated, 43200) // Cache for 12 hours
+            await setCache(cacheKey, validated, 43200); // Cache for 12 hours
         }
 
-        return validated
+        return validated;
     } catch (error) {
-        console.error(`[AI-Service-Error] ${error.message || "Unknown error"}`)
-        throw error
+        console.error(`[AI-Service-Error] ${error.message || "Unknown error"}`);
+        throw error;
     }
 }
 
