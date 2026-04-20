@@ -49,6 +49,8 @@ const ProgressTracker = () => {
     const heatmapScrollRef = useRef(null)
     const [heatmapSliderMax, setHeatmapSliderMax] = useState(0)
     const [heatmapSliderValue, setHeatmapSliderValue] = useState(0)
+    const [goalsModalPage, setGoalsModalPage] = useState(1);
+    const [topicsModalPage, setTopicsModalPage] = useState(1);
 
 
 
@@ -259,8 +261,6 @@ const ProgressTracker = () => {
         return years
     }, [ currentYear ])
 
-    const [goalsModalPage, setGoalsModalPage] = useState(1);
-    const [topicsModalPage, setTopicsModalPage] = useState(1);
     const PROGRESS_MODAL_SIZE = 6;
 
     const paginatedVisibleGoals = visibleGoalTasks.slice((goalsModalPage - 1) * PROGRESS_MODAL_SIZE, goalsModalPage * PROGRESS_MODAL_SIZE);
@@ -277,38 +277,40 @@ const ProgressTracker = () => {
                 <TopBar />
 
                 <section className="progress-grid compact-2">
-                    <article className="progress-card playcard glass">
-                        <h3>Suggested Skill Gaps</h3>
-                        <div className="chip-flow">
+                    <article className="progress-card playcard glass" style={{ padding: '0.8rem' }}>
+                        <h3 style={{ fontSize: '0.8rem', marginBottom: '8px' }}>Suggested Skill Gaps</h3>
+                        <div className="chip-flow" style={{ gap: '6px' }}>
                             {skillGapSuggestions.map((item, idx) => (
-                                <span key={`${item}-${idx}`}>{item}</span>
+                                <span key={`${item}-${idx}`} style={{ fontSize: '0.65rem', padding: '3px 8px' }}>{item}</span>
                             ))}
-                            {!skillGapSuggestions.length && <span>No gaps available yet</span>}
+                            {!skillGapSuggestions.length && <span style={{ fontSize: '0.65rem' }}>No gaps available yet</span>}
                         </div>
                     </article>
 
-                    <article className="progress-card glass">
-                        <h3>Set Your Goals</h3>
-                        <div className="goal-form minimal">
-                            <label>Topic
-                                <input value={goalForm.topic} onChange={(e) => setGoalForm((prev) => ({ ...prev, topic: e.target.value }))} placeholder="Example: System Design" />
-                            </label>
-                            <label>Number of days
-                                <input type="number" min="1" value={goalForm.durationDays} onChange={(e) => setGoalForm((prev) => ({ ...prev, durationDays: e.target.value }))} />
-                            </label>
-                            <label>Target questions per day
-                                <input type="number" min="1" value={goalForm.targetPerDay} onChange={(e) => setGoalForm((prev) => ({ ...prev, targetPerDay: e.target.value }))} />
-                            </label>
-                            <button type="button" className="generate-btn compact" onClick={addGoalHandler} disabled={saving}>Add Goal</button>
+                    <article className="progress-card glass" style={{ padding: '0.8rem' }}>
+                        <h3 style={{ fontSize: '0.8rem', marginBottom: '8px' }}>Set Your Goals</h3>
+                        <div className="goal-form minimal" style={{ gap: '8px' }}>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <label style={{ flex: 2, fontSize: '0.65rem' }}>Topic
+                                    <input value={goalForm.topic} onChange={(e) => setGoalForm((prev) => ({ ...prev, topic: e.target.value }))} placeholder="Ex: System Design" style={{ padding: '4px 8px', fontSize: '0.75rem' }} />
+                                </label>
+                                <label style={{ flex: 1, fontSize: '0.65rem' }}>Days
+                                    <input type="number" min="1" value={goalForm.durationDays} onChange={(e) => setGoalForm((prev) => ({ ...prev, durationDays: e.target.value }))} style={{ padding: '4px 8px', fontSize: '0.75rem' }} />
+                                </label>
+                            </div>
+                            <button type="button" className="generate-btn compact" onClick={addGoalHandler} disabled={saving} style={{ padding: '6px', fontSize: '0.75rem' }}>Add Goal</button>
                         </div>
                     </article>
                 </section>
 
-                <section className="progress-card glass">
-                    <h3>Track Your Progress</h3>
+                <section className="progress-card glass" style={{ padding: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                        <h3 style={{ fontSize: '0.85rem' }}>Ongoing Goals</h3>
+                        {visibleGoalTasks.length > 0 && <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>{visibleGoalTasks.length} Active</span>}
+                    </div>
                     <div className="task-history">
-                        {!previewGoalTasks.length && <p className="notes-meta">No ongoing tasks.</p>}
-                        {previewGoalTasks.map((goal, index) => {
+                        {!paginatedVisibleGoals.length && <p style={{ fontSize: '0.75rem', opacity: 0.5, textAlign: 'center', padding: '20px' }}>No ongoing tasks.</p>}
+                        {paginatedVisibleGoals.map((goal, index) => {
                             const total = Math.max(1, Number(goal.targetValue || 1))
                             const current = Number(goal.currentProgress || 0)
                             const percent = Math.min(100, Math.round((current / total) * 100))
@@ -318,41 +320,21 @@ const ProgressTracker = () => {
                                 <article
                                     key={goal._id}
                                     className={`task-item ${marker}`}
-                                    draggable
-                                    onDragStart={() => setDraggedIndex(index)}
-                                    onDragOver={(e) => e.preventDefault()}
-                                    onDrop={() => {
-                                        if (draggedIndex === null || draggedIndex === index) {
-                                            setDraggedIndex(null)
-                                            return
-                                        }
-                                        setGoals((prev) => {
-                                            const draft = [ ...prev ]
-                                            const moved = draft[draggedIndex]
-                                            draft.splice(draggedIndex, 1)
-                                            draft.splice(index, 0, moved)
-                                            return draft
-                                        })
-                                        setDraggedIndex(null)
-                                    }}
-                                    onDragEnd={() => setDraggedIndex(null)}
+                                    style={{ padding: '0.6rem', marginBottom: '6px' }}
                                 >
                                     <div className="task-main">
-                                        <p className="task-title">{goal.skill}</p>
-                                        <span className={`task-inline-marker task-counter-chip ${marker}`}>
+                                        <p className="task-title" style={{ fontSize: '0.8rem' }}>{goal.skill}</p>
+                                        <span className={`task-inline-marker task-counter-chip ${marker}`} style={{ fontSize: '0.65rem', padding: '2px 6px' }}>
                                             {current}/{total} qs
                                         </span>
                                     </div>
-                                    <div className="task-status">
-                                        <span className={`status-dot ${marker}`} />
-                                        <span>{goal.status === "completed" ? "Completed" : "Ongoing"}</span>
-                                    </div>
-                                    <div className="task-actions">
+                                    <div className="task-actions" style={{ gap: '10px' }}>
                                         <input
                                             className="task-progress-input"
                                             type="number"
                                             min="0"
                                             value={current}
+                                            style={{ width: '45px', padding: '2px 4px', fontSize: '0.75rem' }}
                                             onChange={async (e) => {
                                                 const next = Number(e.target.value || 0)
                                                 try {
@@ -367,6 +349,7 @@ const ProgressTracker = () => {
                                         {goal.status !== "completed" && (
                                             <button
                                                 type="button"
+                                                style={{ fontSize: '0.65rem', padding: '2px 8px' }}
                                                 onClick={async () => {
                                                     try {
                                                         await updateGoal(goal._id, { currentProgress: total })
@@ -376,94 +359,82 @@ const ProgressTracker = () => {
                                                     }
                                                 }}
                                             >
-                                                Mark Complete
+                                                Done
                                             </button>
                                         )}
                                     </div>
-                                    <div className="bar"><i style={{ width: `${percent}%` }} /></div>
+                                    <div className="bar" style={{ height: '3px', marginTop: '6px' }}><i style={{ width: `${percent}%` }} /></div>
                                 </article>
                             )
                         })}
                     </div>
-                    {visibleGoalTasks.length > 3 && (
-                        <button type="button" className="history-more-btn goal-more-btn" onClick={() => setShowAllGoals(true)}>
-                            Show More
-                        </button>
+                    {totalGoalsModalPages > 1 && (
+                        <div className="inline-pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', marginTop: '10px' }}>
+                            <button disabled={goalsModalPage <= 1} onClick={() => setGoalsModalPage(p => p - 1)} style={{ padding: '2px 8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.65rem', borderRadius: '4px' }}>Prev</button>
+                            <span style={{ fontSize: '0.65rem' }}>{goalsModalPage}/{totalGoalsModalPages}</span>
+                            <button disabled={goalsModalPage >= totalGoalsModalPages} onClick={() => setGoalsModalPage(p => p + 1)} style={{ padding: '2px 8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.65rem', borderRadius: '4px' }}>Next</button>
+                        </div>
                     )}
                 </section>
 
                 <section className="progress-grid compact-2">
-                    <article className="progress-card glass">
-                        <h3>Set Your Reminder</h3>
-                        <label>Reminder Time
-                            <input className="reminder-time-input" type="time" value={reminderTime} onChange={(e) => setReminderTime(e.target.value)} />
-                        </label>
-                        <label>Notification channel
-                            <select value={reminderType} onChange={(e) => setReminderType(e.target.value)}>
-                                <option value="in_app">In-app</option>
-                                <option value="email">Email</option>
-                                <option value="both">Both</option>
-                            </select>
-                        </label>
-                        <button type="button" className="generate-btn compact" onClick={saveReminderHandler} disabled={saving}>Save Reminder</button>
+                    <article className="progress-card glass" style={{ padding: '0.8rem' }}>
+                        <h3 style={{ fontSize: '0.8rem', marginBottom: '8px' }}>Reminders</h3>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
+                            <label style={{ flex: 1, fontSize: '0.65rem' }}>Time
+                                <input className="reminder-time-input" type="time" value={reminderTime} onChange={(e) => setReminderTime(e.target.value)} style={{ padding: '4px', fontSize: '0.75rem' }} />
+                            </label>
+                            <button type="button" className="generate-btn compact" onClick={saveReminderHandler} disabled={saving} style={{ padding: '6px', fontSize: '0.75rem' }}>Save</button>
+                        </div>
                     </article>
 
-                    <article className="progress-card glass">
-                        <h3>Completed Topics</h3>
+                    <article className="progress-card glass" style={{ padding: '0.8rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <h3 style={{ fontSize: '0.8rem' }}>Completed Topics</h3>
+                        </div>
                         <div className="topic-history">
-                            {!previewCompletedGoals.length && <p className="notes-meta">No completed topics yet.</p>}
-                            {previewCompletedGoals.map((goal) => (
-                                <article key={goal._id} className="topic-item">
-                                    <strong>{goal.skill}</strong>
-                                    <small>{new Date(goal.completedAt).toLocaleDateString()}</small>
+                            {!paginatedCompletedGoals.length && <p style={{ fontSize: '0.7rem', opacity: 0.5, textAlign: 'center', padding: '10px' }}>No topics yet.</p>}
+                            {paginatedCompletedGoals.map((goal) => (
+                                <article key={`done-${goal._id}`} className="topic-item" style={{ padding: '4px 8px', marginBottom: '4px' }}>
+                                    <strong style={{ fontSize: '0.75rem' }}>{goal.skill}</strong>
+                                    <small style={{ fontSize: '0.6rem' }}>{new Date(goal.completedAt).toLocaleDateString()}</small>
                                 </article>
                             ))}
                         </div>
-                        {completedGoals.length > 3 && (
-                            <button
-                                type="button"
-                                className="history-more-btn goal-more-btn"
-                                onClick={() => setShowAllCompletedTopics(true)}
-                            >
-                                Show More
-                            </button>
+                        {totalTopicsModalPages > 1 && (
+                            <div className="inline-pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', marginTop: '6px' }}>
+                                <button disabled={topicsModalPage <= 1} onClick={() => setTopicsModalPage(p => p - 1)} style={{ padding: '2px 6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.6rem', borderRadius: '4px' }}>Prev</button>
+                                <span style={{ fontSize: '0.6rem' }}>{topicsModalPage}/{totalTopicsModalPages}</span>
+                                <button disabled={topicsModalPage >= totalTopicsModalPages} onClick={() => setTopicsModalPage(p => p + 1)} style={{ padding: '2px 6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.6rem', borderRadius: '4px' }}>Next</button>
+                            </div>
                         )}
                     </article>
                 </section>
 
                 <section className="progress-grid compact-3">
-                    <article className="progress-card stat-tile glass">
-                        <h3>Goals Completed</h3>
-                        <p className="big">{stats?.goalsSummary?.completed || 0}/{stats?.goalsSummary?.total || 0}</p>
+                    <article className="progress-card stat-tile glass" style={{ padding: '0.6rem' }}>
+                        <h3 style={{ fontSize: '0.75rem' }}>Goals Completed</h3>
+                        <p className="big" style={{ fontSize: '1.2rem' }}>{stats?.goalsSummary?.completed || 0}/{stats?.goalsSummary?.total || 0}</p>
                     </article>
-                    <article className="progress-card stat-tile glass">
-                        <h3>Completion Trend</h3>
-                        <p className="big">
-                            <span className={`trend-chip ${trendClass}`}>
-                                <span className={`trend-icon ${trendClass}`} aria-hidden="true">
-                                    <svg viewBox="0 0 24 24" fill="none">
-                                        {trendPercent >= 0
-                                            ? <path d="M6 14L11 9L14.5 12.5L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                            : <path d="M6 10L11 15L14.5 11.5L18 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />}
-                                    </svg>
-                                </span>
-                                {Math.abs(trendPercent)}%
+                    <article className="progress-card stat-tile glass" style={{ padding: '0.6rem' }}>
+                        <h3 style={{ fontSize: '0.75rem' }}>Streak</h3>
+                        <p className="big" style={{ fontSize: '1.2rem' }}>{stats?.streak?.current || 0} days</p>
+                    </article>
+                    <article className="progress-card stat-tile glass" style={{ padding: '0.6rem' }}>
+                        <h3 style={{ fontSize: '0.75rem' }}>Trend</h3>
+                        <p className="big" style={{ fontSize: '1.2rem' }}>
+                            <span className={`trend-chip ${trendClass}`} style={{ fontSize: '0.7rem', padding: '2px 6px' }}>
+                                {trendPercent >= 0 ? '+' : ''}{trendPercent}%
                             </span>
                         </p>
-                        <p className="notes-meta">Compared to previous week.</p>
-                    </article>
-                    <article className="progress-card stat-tile glass">
-                        <h3>Current Streak</h3>
-                        <p className="big">{stats?.streak?.current || 0} days</p>
                     </article>
                 </section>
 
-                <section className="progress-card heatmap-card glass">
-                    <div className="heatmap-head">
-                        <h3>{yearHeatmap.totalSubmissions} goals completed in {selectedYear}</h3>
+                <section className="progress-card heatmap-card glass" style={{ padding: '1rem' }}>
+                    <div className="heatmap-head" style={{ marginBottom: '10px' }}>
+                        <h3 style={{ fontSize: '0.85rem' }}>{yearHeatmap.totalSubmissions} Activity Points in {selectedYear}</h3>
                         <div className="heatmap-head__right">
-                            <span>Total active days: {yearHeatmap.totalActiveDays}</span>
-                            <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}>
+                            <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} style={{ padding: '2px 6px', fontSize: '0.75rem' }}>
                                 {availableYears.map((year) => <option key={year} value={year}>{year}</option>)}
                             </select>
                         </div>
@@ -474,26 +445,15 @@ const ProgressTracker = () => {
                             className="calendar-heatmap heatmap-animate"
                             key={selectedYear}
                             ref={heatmapScrollRef}
+                            style={{ gap: '15px' }}
                             onScroll={(e) => setHeatmapSliderValue(e.currentTarget.scrollLeft)}
                         >
                             {yearHeatmap.months.map((month) => (
                                 <article className="calendar-month" key={`${selectedYear}-${month.monthIndex}`}>
-                                    <h4>
-                                        {month.monthLabel}
-                                        <span>{month.totalDays} days</span>
-                                    </h4>
-                                    <div className="calendar-month__weekdays">
-                                        <span>S</span>
-                                        <span>M</span>
-                                        <span>T</span>
-                                        <span>W</span>
-                                        <span>T</span>
-                                        <span>F</span>
-                                        <span>S</span>
-                                    </div>
-                                    <div className="calendar-month__grid">
+                                    <h4 style={{ fontSize: '0.75rem' }}>{month.monthLabel}</h4>
+                                    <div className="calendar-month__grid" style={{ gap: '3px' }}>
                                         {Array.from({ length: month.firstDayOffset }).map((_, idx) => (
-                                            <span key={`pad-${month.monthIndex}-${idx}`} className="cell out" aria-hidden="true" />
+                                            <span key={`pad-${month.monthIndex}-${idx}`} className="cell out" style={{ width: '10px', height: '10px' }} />
                                         ))}
                                         {month.days.map((day) => {
                                             const intensity = Math.min(4, Math.max(0, Number(day.value || 0)))
@@ -501,6 +461,7 @@ const ProgressTracker = () => {
                                                 <span
                                                     key={day.key}
                                                     className={`cell lv-${intensity}`}
+                                                    style={{ width: '10px', height: '10px' }}
                                                     title={`${day.value} goals on ${day.key}`}
                                                 />
                                             )
@@ -509,135 +470,16 @@ const ProgressTracker = () => {
                                 </article>
                             ))}
                         </div>
-                        {heatmapSliderMax > 0 && (
-                            <div className="calendar-slider">
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max={Math.ceil(heatmapSliderMax)}
-                                    value={Math.min(Math.ceil(heatmapSliderValue), Math.ceil(heatmapSliderMax))}
-                                    onChange={(e) => {
-                                        const next = Number(e.target.value)
-                                        setHeatmapSliderValue(next)
-                                        if (heatmapScrollRef.current) {
-                                            heatmapScrollRef.current.scrollLeft = next
-                                        }
-                                    }}
-                                />
-                            </div>
-                        )}
                     </div>
                 </section>
                 
                 <div className="notes-flash">
-                    {loading && <Loader message="Synchronizing your progress data..." style={{ minHeight: '180px', marginTop: '1rem' }} />}
-                    {error && <p className="notes-error">{error}</p>}
-                    {message && <p className="notes-success">{message}</p>}
+                    {loading && <Loader style={{ minHeight: '100px' }} />}
+                    {error && <p className="notes-error" style={{ fontSize: '0.7rem' }}>{error}</p>}
                 </div>
             </section>
-
-            {showAllGoals && (
-                <section className="history-modal-overlay" onClick={() => setShowAllGoals(false)}>
-                    <article className="history-modal goals-modal" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', maxHeight: '85vh' }}>
-                        <div className="history-modal__head" style={{ flexShrink: 0 }}>
-                            <h3>All Goals</h3>
-                            <button type="button" onClick={() => setShowAllGoals(false)}>Close</button>
-                        </div>
-                        <div className="history-modal__list" style={{ flex: 1, overflowY: 'auto', paddingRight: '0.4rem' }}>
-                            {paginatedVisibleGoals.map((goal) => {
-                                const total = Math.max(1, Number(goal.targetValue || 1))
-                                const current = Number(goal.currentProgress || 0)
-                                const marker = goal.status === "completed" ? "completed" : "ongoing"
-                                return (
-                                    <article key={goal._id} className={`task-item ${marker}`}>
-                                        <div className="task-main">
-                                            <p className="task-title">{goal.skill}</p>
-                                            <span className={`task-inline-marker task-counter-chip ${marker}`}>
-                                                {current}/{total} qs
-                                            </span>
-                                        </div>
-                                        <div className="task-status">
-                                            <span className={`status-dot ${marker}`} />
-                                            <span>{goal.status === "completed" ? "Completed" : "Ongoing"}</span>
-                                        </div>
-                                        <div className="task-actions">
-                                            <input
-                                                className="task-progress-input"
-                                                type="number"
-                                                min="0"
-                                                value={current}
-                                                onChange={async (e) => {
-                                                    const next = Number(e.target.value || 0)
-                                                    try {
-                                                        await updateGoal(goal._id, { currentProgress: next })
-                                                        setGoals((prev) => prev.map((item) => item._id === goal._id ? { ...item, currentProgress: next } : item))
-                                                        await loadOverview(selectedYear)
-                                                    } catch (err) {
-                                                        setError(err?.response?.data?.message || "Unable to update goal.")
-                                                    }
-                                                }}
-                                            />
-                                            {goal.status !== "completed" && (
-                                                <button
-                                                    type="button"
-                                                    onClick={async () => {
-                                                        try {
-                                                            await updateGoal(goal._id, { currentProgress: total })
-                                                            await loadOverview(selectedYear)
-                                                        } catch (err) {
-                                                            setError(err?.response?.data?.message || "Unable to complete goal.")
-                                                        }
-                                                    }}
-                                                >
-                                                    Mark Complete
-                                                </button>
-                                            )}
-                                        </div>
-                                        <div className="bar"><i style={{ width: `${Math.min(100, Math.round((current / total) * 100))}%` }} /></div>
-                                    </article>
-                                )
-                            })}
-                        </div>
-                        {totalGoalsModalPages > 1 && (
-                            <div className="modal-pagination" style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.8rem', flexShrink: 0 }}>
-                                <button disabled={goalsModalPage <= 1} onClick={() => setGoalsModalPage(p => p - 1)}>Prev</button>
-                                <span>{goalsModalPage} / {totalGoalsModalPages}</span>
-                                <button disabled={goalsModalPage >= totalGoalsModalPages} onClick={() => setGoalsModalPage(p => p + 1)}>Next</button>
-                            </div>
-                        )}
-                    </article>
-                </section>
-            )}
-
-            {showAllCompletedTopics && (
-                <section className="history-modal-overlay" onClick={() => setShowAllCompletedTopics(false)}>
-                    <article className="history-modal goals-modal" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', maxHeight: '85vh' }}>
-                        <div className="history-modal__head" style={{ flexShrink: 0 }}>
-                            <h3>Completed Topics</h3>
-                            <button type="button" onClick={() => setShowAllCompletedTopics(false)}>Close</button>
-                        </div>
-                        <div className="history-modal__list" style={{ flex: 1, overflowY: 'auto', paddingRight: '0.4rem' }}>
-                            {!completedGoals.length && <p className="notes-meta">No completed topics yet.</p>}
-                            {paginatedCompletedGoals.map((goal) => (
-                                <article key={`done-${goal._id}`} className="topic-item topic-item--modal">
-                                    <strong>{goal.skill}</strong>
-                                    <small>{new Date(goal.completedAt).toLocaleString()}</small>
-                                </article>
-                            ))}
-                        </div>
-                        {totalTopicsModalPages > 1 && (
-                            <div className="modal-pagination" style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.8rem', flexShrink: 0 }}>
-                                <button disabled={topicsModalPage <= 1} onClick={() => setTopicsModalPage(p => p - 1)}>Prev</button>
-                                <span>{topicsModalPage} / {totalTopicsModalPages}</span>
-                                <button disabled={topicsModalPage >= totalTopicsModalPages} onClick={() => setTopicsModalPage(p => p + 1)}>Next</button>
-                            </div>
-                        )}
-                    </article>
-                </section>
-            )}
         </main>
     )
 }
 
 export default ProgressTracker
-

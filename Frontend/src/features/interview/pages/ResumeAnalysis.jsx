@@ -16,8 +16,10 @@ const ResumeAnalysis = () => {
     const [selectedFile, setSelectedFile] = useState("")
     const [showPlansModal, setShowPlansModal] = useState(false)
     const resumeInputRef = useRef()
-
     const navigate = useNavigate()
+
+    const [modalPage, setModalPage] = useState(1);
+    const MODAL_PAGE_SIZE = 10;
 
     useEffect(() => {
         document.title = "Resume Analysis | IntelliPrep"
@@ -66,10 +68,10 @@ const ResumeAnalysis = () => {
         )
     }
 
-    const [modalPage, setModalPage] = useState(1);
-    const MODAL_PAGE_SIZE = 10;
-    const paginatedReports = reports.slice((modalPage - 1) * MODAL_PAGE_SIZE, modalPage * MODAL_PAGE_SIZE);
-    const totalModalPages = Math.ceil(reports.length / MODAL_PAGE_SIZE);
+    const [historyPage, setHistoryPage] = useState(1);
+    const HISTORY_PAGE_SIZE = 4;
+    const paginatedReports = reports.slice((historyPage - 1) * HISTORY_PAGE_SIZE, historyPage * HISTORY_PAGE_SIZE);
+    const totalHistoryPages = Math.ceil(reports.length / HISTORY_PAGE_SIZE);
 
     return (
         <main className="dashboard-page">
@@ -83,34 +85,29 @@ const ResumeAnalysis = () => {
                     <article className="analysis-builder">
                         <div className="analysis-builder__main">
                             
-                            <div className="input-card left-box">
-                                <div className="card-header">
-                                    <span className="material-symbols-outlined box-icon">description</span>
-                                    <h2>Target Job Description</h2>
-                                    <span className="material-symbols-outlined float-icon">work</span>
+                            <div className="input-card left-box" style={{ padding: '0.8rem' }}>
+                                <div className="card-header" style={{ marginBottom: '0.6rem' }}>
+                                    <span className="material-symbols-outlined box-icon" style={{ fontSize: '1.2rem' }}>description</span>
+                                    <h2 style={{ fontSize: '0.85rem' }}>Target Job Description</h2>
                                 </div>
                                 <textarea
                                     className="job-description"
                                     onChange={(e) => setJobDescription(e.target.value)}
-                                    placeholder="Paste the full job description here... Our system will extract key requirements, cultural markers, and technical stacks."
+                                    placeholder="Paste the full job description here..."
                                     value={jobDescription}
+                                    style={{ fontSize: '0.8rem', height: '120px' }}
                                 />
-                                <div className="input-footer">
-                                    <span>Extracting: Key Skills, Years of Exp, Culture Fit</span>
-                                    <span>Min 100 characters recommended</span>
-                                </div>
                             </div>
                             
-                            <div className="input-card right-box">
-                                <div className="card-header">
-                                    <span className="material-symbols-outlined box-icon">attachment</span>
-                                    <h2>Your Profile</h2>
+                            <div className="input-card right-box" style={{ padding: '0.8rem' }}>
+                                <div className="card-header" style={{ marginBottom: '0.6rem' }}>
+                                    <span className="material-symbols-outlined box-icon" style={{ fontSize: '1.2rem' }}>attachment</span>
+                                    <h2 style={{ fontSize: '0.85rem' }}>Your Profile</h2>
                                 </div>
                                 
-                                <label className="upload-box">
-                                    <span className="material-symbols-outlined">cloud_upload</span>
-                                    <strong>Upload Master Resume</strong>
-                                    <span>PDF, DOCX up to 10MB</span>
+                                <label className="upload-box" style={{ padding: '0.8rem', borderStyle: 'dashed' }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '1.5rem' }}>cloud_upload</span>
+                                    <strong style={{ fontSize: '0.75rem' }}>Upload Master Resume</strong>
                                     <input 
                                         ref={resumeInputRef} 
                                         type='file' 
@@ -119,94 +116,85 @@ const ResumeAnalysis = () => {
                                         style={{ display: 'none' }}
                                     />
                                 </label>
-                                {selectedFile && <div className="file-name">{selectedFile} <button onClick={clearSelectedResume}>✕</button></div>}
+                                {selectedFile && <div className="file-name" style={{ fontSize: '0.7rem' }}>{selectedFile} <button onClick={clearSelectedResume}>✕</button></div>}
 
-                                <div className="or-divider">
-                                    <span></span>
-                                    <p>OR</p>
-                                    <span></span>
-                                </div>
-
-                                <div className="self-desc-section">
-                                    <h3 className="section-label">
-                                        <span className="material-symbols-outlined" style={{color: '#ffb454', fontSize: '1rem'}}>edit_note</span>
-                                        QUICK SELF-DESCRIPTION
-                                    </h3>
-                                    <p className="hint">Add nuance not in your resume... (e.g., career pivots, specific achievements)</p>
+                                <div className="self-desc-section" style={{ marginTop: '0.8rem' }}>
+                                    <h3 className="section-label" style={{ fontSize: '0.7rem' }}>QUICK SELF-DESCRIPTION</h3>
                                     <textarea
                                         onChange={(e) => setSelfDescription(e.target.value)}
                                         value={selfDescription}
-                                        placeholder=""
+                                        placeholder="Add pivot details..."
+                                        style={{ fontSize: '0.8rem', height: '60px' }}
                                     />
                                 </div>
                             </div>
 
                         </div>
                         
-                        <div className="analysis-builder__footer">
-                            {error && <p className="builder-error">{error}</p>}
+                        <div className="analysis-builder__footer" style={{ marginTop: '0.8rem' }}>
+                            {error && <p className="builder-error" style={{ fontSize: '0.7rem', color: '#ffb5af' }}>{error}</p>}
                             <button
                                 onClick={handleGenerateReport}
                                 className="generate-btn hero-btn"
                                 disabled={loading}
+                                style={{ padding: '0.6rem 1.2rem', fontSize: '0.8rem' }}
                             >
-                                Analyze & Generate Strategy <span className="material-symbols-outlined">bolt</span>
+                                Analyze & Generate Strategy <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>bolt</span>
                             </button>
                         </div>
                     </article>
                     
                     <article className="recent-plans-panel">
-                        <div className="panel-heading">
+                        <div className="panel-heading" style={{ marginBottom: '0.8rem' }}>
                             <div>
-                                <h2>My Recent Plans</h2>
-                                <p>Review and update your generated prep strategies</p>
+                                <h2 style={{ fontSize: '1rem' }}>My Recent Plans</h2>
                             </div>
-                            <button className="view-all-btn" onClick={() => setShowPlansModal(true)}>VIEW ALL HISTORIES</button>
+                            {reports.length > 0 && <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>{reports.length} Total</span>}
                         </div>
                         
                         {reports.length === 0 ? (
                             <div className="empty-state">
                                 <p>No history yet.</p>
-                                <span>Generate a report to see it here.</span>
                             </div>
                         ) : (
-                            <>
-                                <ul className="recent-plans-list">
-                                    {reports.slice(0, 4).map(report => {
+                            <div className="inline-pagination-container">
+                                <ul className="recent-plans-list" style={{ gap: '0.5rem' }}>
+                                    {paginatedReports.map(report => {
                                         const dateLabel = new Date(report.createdAt).toLocaleDateString();
                                         return (
-                                        <li key={report._id} className="plan-item">
-                                            <div className="plan-icon">
-                                                <img src="/mind-icon.svg" alt="icon" style={{width: 20}} />
-                                            </div>
-                                            <div className="plan-meta">
+                                        <li key={report._id} className="plan-item" style={{ padding: '0.6rem' }}>
+                                            <div className="plan-meta" style={{ flex: 1 }}>
                                                 <div className="plan-title-row">
-                                                    <h3>{report.title || 'Untitled Position'}</h3>
-                                                    {report.matchScore && <span className="match-badge">{report.matchScore}% MATCH</span>}
+                                                    <h3 style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }} title={report.title}>{report.title || 'Untitled Position'}</h3>
+                                                    {report.matchScore && <span className="match-badge" style={{ fontSize: '0.6rem', padding: '2px 4px' }}>{report.matchScore}%</span>}
                                                 </div>
-                                                <p className="plan-subtitle">Target Role • {dateLabel}</p>
-                                            </div>
-                                            <div className="readiness-col">
-                                                <span className="readiness-label">READINESS</span>
-                                                <div className="readiness-bar">
-                                                    <div className="bar-fill" style={{width: `${report.matchScore || 50}%`}}></div>
-                                                </div>
+                                                <p className="plan-subtitle" style={{ fontSize: '0.65rem' }}>{dateLabel}</p>
                                             </div>
                                             <div className="plan-actions">
-                                                <button onClick={() => navigate(`/interview/${report._id}`)}><span className="material-symbols-outlined">visibility</span></button>
+                                                <button onClick={() => navigate(`/interview/${report._id}`)} style={{ padding: '4px' }}>
+                                                    <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>visibility</span>
+                                                </button>
                                             </div>
                                         </li>
                                     )})}
                                 </ul>
-                                {reports.length > 4 && (
-                                    <button 
-                                        className="history-more-btn" 
-                                        onClick={() => setShowPlansModal(true)}
-                                        style={{ marginTop: '0.8rem', width: '100%', display: 'block' }}>
-                                        Show More
-                                    </button>
+                                
+                                {totalHistoryPages > 1 && (
+                                    <div className="inline-list-pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', marginTop: '12px' }}>
+                                        <button 
+                                            disabled={historyPage <= 1} 
+                                            onClick={() => setHistoryPage(p => p - 1)}
+                                            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '2px 10px', borderRadius: '4px', fontSize: '0.7rem', cursor: historyPage <= 1 ? 'not-allowed' : 'pointer' }}
+                                        >Prev</button>
+                                        <span style={{ fontSize: '0.7rem' }}>{historyPage} of {totalHistoryPages}</span>
+                                        <button 
+                                            disabled={historyPage >= totalHistoryPages} 
+                                            onClick={() => setHistoryPage(p => p + 1)}
+                                            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '2px 10px', borderRadius: '4px', fontSize: '0.7rem', cursor: historyPage >= totalHistoryPages ? 'not-allowed' : 'pointer' }}
+                                        >Next</button>
+                                    </div>
                                 )}
-                            </>
+                            </div>
                         )}
                     </article>
                 </div>
@@ -217,46 +205,6 @@ const ResumeAnalysis = () => {
                     <a href='#' onClick={e => e.preventDefault()}>Help Center</a>
                 </footer>
             </section>
-            
-            {showPlansModal && (
-                <section className="history-modal-overlay" onClick={() => setShowPlansModal(false)}>
-                    <article className="history-modal" onClick={(e) => e.stopPropagation()} style={{ width: 'min(760px, 92vw)', maxHeight: '78vh', overflow: 'hidden', border: '1px solid rgba(146, 173, 196, 0.24)', borderRadius: '0.85rem', background: 'linear-gradient(145deg, rgba(24, 40, 56, 0.96), rgba(10, 18, 27, 0.98))', padding: '1.2rem', display: 'flex', flexDirection: 'column' }}>
-                        <div className="history-modal__head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', flexShrink: 0 }}>
-                            <h3 style={{ margin: 0, fontSize: '1.1rem' }}>All Report Plans</h3>
-                            <div className="history-modal__actions">
-                                <button type="button" onClick={() => setShowPlansModal(false)}>Close</button>
-                            </div>
-                        </div>
-                        <div className="history-modal__list" style={{ flex: 1, overflowY: 'auto', display: 'grid', gap: '0.6rem', paddingRight: '0.5rem' }}>
-                            {paginatedReports.map(report => (
-                                <div className="history-modal__item" key={report._id} style={{ border: '1px solid rgba(146, 173, 196, 0.22)', background: 'rgba(88, 121, 151, 0.1)', borderRadius: '0.55rem', padding: '0.62rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div>
-                                        <strong style={{ fontSize: '0.86rem' }}>{report.title || 'Untitled Position'}</strong>
-                                        <p style={{ margin: '0.14rem 0 0', fontSize: '0.74rem', color: 'rgba(194, 214, 233, 0.72)' }}>{new Date(report.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</p>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                                        <p className="report-score" style={{ margin: 0 }}>{report.matchScore ? report.matchScore + "% Match" : "Ready"}</p>
-                                        <button 
-                                            type="button" 
-                                            onClick={() => navigate(`/interview/${report._id}`)}
-                                            aria-label="View Plan"
-                                            style={{ border: '1px solid rgba(143, 180, 210, 0.3)', background: 'rgba(97, 137, 169, 0.2)', color: '#eaf3fb', borderRadius: '0.35rem', padding: '0.28rem 0.55rem', fontSize: '0.72rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>visibility</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        {totalModalPages > 1 && (
-                            <div className="modal-pagination" style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-                                <button disabled={modalPage <= 1} onClick={() => setModalPage(p => p - 1)} style={{ padding: '0.3rem 0.6rem', background: 'rgba(143, 180, 210, 0.1)', border: '1px solid rgba(143, 180, 210, 0.2)', borderRadius: '0.4rem', color: '#eaf3fb', opacity: modalPage <= 1 ? 0.5 : 1 }}>Prev</button>
-                                <span style={{ fontSize: '0.85rem' }}>Page {modalPage} of {totalModalPages}</span>
-                                <button disabled={modalPage >= totalModalPages} onClick={() => setModalPage(p => p + 1)} style={{ padding: '0.3rem 0.6rem', background: 'rgba(143, 180, 210, 0.1)', border: '1px solid rgba(143, 180, 210, 0.2)', borderRadius: '0.4rem', color: '#eaf3fb', opacity: modalPage >= totalModalPages ? 0.5 : 1 }}>Next</button>
-                            </div>
-                        )}
-                    </article>
-                </section>
-            )}
         </main>
     )
 }

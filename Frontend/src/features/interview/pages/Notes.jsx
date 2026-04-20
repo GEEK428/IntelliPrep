@@ -239,24 +239,19 @@ const Notes = () => {
                             placeholder="Search keywords..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
+                            onKeyDown={(e) => { if(e.key === 'Enter') loadNotes(1) }}
                         />
                     </div>
                 </div>
                 
                 <header className="notes-optimized-header compact-view">
-                    <div className="velocity-card card-glass small-card">
-                        <div className="velocity-header">
-                            <p>AVG CONFIDENCE</p>
-                            <div className="velocity-main">
-                                <h1>{stats.avgConfidence}<span style={{fontSize:'0.9rem', color: '#6fb2e3'}}>/5</span></h1>
-                                <span className="velocity-meta">Prep Quality</span>
-                            </div>
-                        </div>
+                    <div className="velocity-card small-card">
                         <div className="velocity-pie-wrap" title={`${stats.understood} understood out of ${stats.total}`}>
                             <div className="velocity-pie small-pie" style={pieChartStyle}>
                                 <div className="velocity-pie-inner">
                                     <p>UNDERSTOOD</p>
                                     <strong>{stats.understood}/{stats.total}</strong>
+                                    <span className="velocity-meta" style={{marginTop: '4px'}}>{stats.avgConfidence} Avg</span>
                                 </div>
                             </div>
                         </div>

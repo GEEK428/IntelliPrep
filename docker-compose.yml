@@ -37,9 +37,7 @@ services:
         - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
     container_name: intelliprep-frontend
     ports:
-      - "5173:5173"
-    environment:
-      - VITE_API_URL=http://localhost:3000 # Keep for dev fallback
+      - "5173:80"
     env_file:
       - ./Frontend/.env
     volumes:

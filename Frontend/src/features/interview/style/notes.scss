@@ -5,79 +5,94 @@
     min-height: 100vh;
 }
 
-/* --- Compact Header --- */
+/* --- Centered Stats Header --- */
 .notes-optimized-header.compact-view {
     display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.small-card {
-    padding: 0.7rem !important;
-    min-height: 80px !important;
-}
-
-.velocity-card {
-    display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    flex: 2;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem;
+}
+
+.velocity-card.small-card {
+    background: transparent !important;
+    border: none !important;
+    flex: none;
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 15px;
+    min-height: auto !important;
+}
+
+.velocity-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .velocity-header p {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     color: #9fd0f4;
-    margin: 0;
-    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 2px;
 }
 
 .velocity-main h1 {
-    font-size: 1.8rem;
-    margin: 2px 0;
+    font-size: 2rem;
+    margin: 0;
+    line-height: 1;
 }
 
 .velocity-meta {
     font-size: 0.6rem;
-    color: rgba(194, 214, 233, 0.6);
+    opacity: 0.5;
 }
 
-.streak-card {
-    flex: 1;
+.velocity-pie-wrap {
+    width: 120px;
+    height: 120px;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
     align-items: center;
-    text-align: center;
+    justify-content: center;
 }
 
-.streak-card p {
-    font-size: 0.65rem;
-    color: #9fd0f4;
-    margin: 5px 0 0;
-}
-
-.streak-card h1 {
-    font-size: 1.5rem;
-    margin: 2px 0;
-}
-
-.small-icon {
-    font-size: 1.2rem !important;
-    color: #ffb5af;
-}
-
-.small-pie {
-    width: 60px !important;
-    height: 60px !important;
+.velocity-pie.small-pie {
+    width: 110px !important;
+    height: 110px !important;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
 }
 
 .velocity-pie-inner {
-    width: 50px !important;
-    height: 50px !important;
+    width: 90px !important;
+    height: 90px !important;
+    background: #0b1219;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
-.velocity-pie-inner p { font-size: 8px !important; }
-.velocity-pie-inner strong { font-size: 10px !important; }
+.velocity-pie-inner p { 
+    font-size: 0.55rem !important; 
+    margin: 0;
+    opacity: 0.7;
+}
+
+.velocity-pie-inner strong { 
+    font-size: 0.9rem !important; 
+    color: #6fb2e3;
+}
 
 /* --- Search --- */
 .notes-search-row {

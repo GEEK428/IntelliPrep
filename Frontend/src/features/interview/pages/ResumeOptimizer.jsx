@@ -109,6 +109,11 @@ const ResumeOptimizer = () => {
         }
     }
 
+    const [historyPage, setHistoryPage] = useState(1);
+    const HISTORY_PAGE_SIZE = 3;
+    const paginatedHistory = history.slice((historyPage - 1) * HISTORY_PAGE_SIZE, historyPage * HISTORY_PAGE_SIZE);
+    const totalHistoryPages = Math.ceil(history.length / HISTORY_PAGE_SIZE);
+
     return (
         <main className="dashboard-page">
             <Sidebar />
@@ -117,11 +122,11 @@ const ResumeOptimizer = () => {
                 <TopBar />
 
                 <section className="builder-grid">
-                    <article className="upload-panel card-glass">
+                    <article className="upload-panel card-glass" style={{ gap: '0.8rem' }}>
                         <div className="compact-upload">
-                            <button className="select-btn" onClick={() => fileInputRef.current?.click()}>
-                                <span className="material-symbols-outlined">upload_file</span>
-                                {selectedFile ? selectedFile : "Upload Resume (PDF/DOCX)"}
+                            <button className="select-btn" onClick={() => fileInputRef.current?.click()} style={{ padding: '0.6rem', fontSize: '0.7rem' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>upload_file</span>
+                                {selectedFile ? (selectedFile.length > 25 ? selectedFile.substring(0, 22) + "..." : selectedFile) : "Upload Resume (PDF/DOCX)"}
                             </button>
                             <input
                                 ref={fileInputRef}
@@ -149,17 +154,28 @@ const ResumeOptimizer = () => {
                         </button>
 
                         <div className="mini-history">
-                            <h3>RECENT BUILDS</h3>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                <h3>RECENT BUILDS</h3>
+                                {history.length > 0 && <span style={{ fontSize: '0.65rem', opacity: 0.6 }}>{history.length} files</span>}
+                            </div>
                             <div className="history-list-compact">
-                                {history.slice(0, 3).map((item) => (
-                                    <div key={item.reportId} className="history-pill">
+                                {paginatedHistory.map((item) => (
+                                    <div key={`${item.reportId}-${item.createdAt}`} className="history-pill" title={item.fileName}>
                                         <span>{item.fileName}</span>
                                         <button onClick={() => triggerDownload({ reportId: item.reportId, fileName: item.fileName })}>
                                             <span className="material-symbols-outlined">download</span>
                                         </button>
                                     </div>
                                 ))}
+                                {history.length === 0 && <p style={{ fontSize: '0.7rem', opacity: 0.5, textAlign: 'center', padding: '10px' }}>No builds yet</p>}
                             </div>
+                            {totalHistoryPages > 1 && (
+                                <div className="history-pagination">
+                                    <button disabled={historyPage <= 1} onClick={() => setHistoryPage(p => p - 1)}>Prev</button>
+                                    <span>{historyPage}/{totalHistoryPages}</span>
+                                    <button disabled={historyPage >= totalHistoryPages} onClick={() => setHistoryPage(p => p + 1)}>Next</button>
+                                </div>
+                            )}
                         </div>
                     </article>
 

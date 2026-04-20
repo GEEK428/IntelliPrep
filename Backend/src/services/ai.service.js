@@ -18,15 +18,14 @@ function generateCacheKey(prefix, data) {
 
 function extractResponseText(response) {
     if (!response) return ""
+    // In @google/genai SDK, text is often a top-level property
     if (typeof response.text === "string") return response.text
-    if (typeof response.text === "function") {
-        try {
-            return response.text() || ""
-        } catch (err) {
-            return ""
-        }
+    // Fallback to result property or candidates list
+    const candidates = response.candidates || response.result?.candidates
+    if (candidates && candidates[0]) {
+        return candidates[0].content?.parts?.map(p => p.text || "").join("") || ""
     }
-    return response?.candidates?.[0]?.content?.parts?.map((part) => part?.text || "").join("") || ""
+    return ""
 }
 
 function safeParseJson(rawText = "") {
@@ -57,8 +56,10 @@ async function generateStructuredJson({ prompt, schema, cachePrefix = null, cach
         if (!process.env.GOOGLE_GENAI_API_KEY) throw new Error("GOOGLE_GENAI_API_KEY is missing.")
         
         console.log(`[AI-Service] MISS for ${RESUME_AI_MODEL}. Generating...`)
-        const model = ai.getGenerativeModel({ model: RESUME_AI_MODEL })
-        const response = await model.generateContent({
+        
+        // NEW SDK SYNTAX (for @google/genai v1.46.0+)
+        const response = await ai.models.generateContent({
+            model: RESUME_AI_MODEL,
             contents: [{ role: "user", parts: [{ text: prompt }] }],
             generationConfig: {
                 responseMimeType: "application/json",
@@ -66,7 +67,7 @@ async function generateStructuredJson({ prompt, schema, cachePrefix = null, cach
             }
         })
         
-        const rawText = extractResponseText(response.response)
+        const rawText = extractResponseText(response)
         if (!rawText) throw new Error("Empty response from AI model")
 
         const parsed = safeParseJson(rawText)
