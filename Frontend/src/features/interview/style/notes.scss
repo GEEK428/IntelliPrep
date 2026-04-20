@@ -5,93 +5,44 @@
     min-height: 100vh;
 }
 
-/* --- Centered Stats Header --- */
-.notes-optimized-header.compact-view {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding: 0.5rem;
-}
 
-.velocity-card.small-card {
-    background: transparent !important;
-    border: none !important;
-    flex: none;
-    width: 100%;
-    max-width: 400px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 15px;
-    min-height: auto !important;
-}
+/* --- Quick Filters --- */
+.notes-quick-filters {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: rgba(22, 33, 46, 0.9);
+    
+    .filter-grid {
+        label {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 0.65rem;
+            color: #9fd0f4;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
 
-.velocity-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
+            select {
+                background: rgba(15, 23, 31, 0.8);
+                border: 1px solid rgba(146, 173, 196, 0.2);
+                border-radius: 4px;
+                color: white;
+                font-size: 0.75rem;
+                padding: 6px;
+                outline: none;
+                cursor: pointer;
 
-.velocity-header p {
-    font-size: 0.6rem;
-    color: #9fd0f4;
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-    margin-bottom: 2px;
-}
-
-.velocity-main h1 {
-    font-size: 2rem;
-    margin: 0;
-    line-height: 1;
-}
-
-.velocity-meta {
-    font-size: 0.6rem;
-    opacity: 0.5;
-}
-
-.velocity-pie-wrap {
-    width: 120px;
-    height: 120px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.velocity-pie.small-pie {
-    width: 110px !important;
-    height: 110px !important;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-.velocity-pie-inner {
-    width: 90px !important;
-    height: 90px !important;
-    background: #0b1219;
-    border-radius: 50%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-}
-
-.velocity-pie-inner p { 
-    font-size: 0.55rem !important; 
-    margin: 0;
-    opacity: 0.7;
-}
-
-.velocity-pie-inner strong { 
-    font-size: 0.9rem !important; 
-    color: #6fb2e3;
+                &:hover {
+                    border-color: #6fb2e3;
+                }
+                
+                option {
+                    background: #0b1219;
+                }
+            }
+        }
+    }
 }
 
 /* --- Search --- */

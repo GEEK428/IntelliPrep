@@ -102,7 +102,13 @@ const Notes = () => {
                 view: "all", 
                 page: p, 
                 limit: 15,
-                domain: filterDomain === "all" ? "" : filterDomain
+                search: search,
+                domain: filterDomain === "all" ? "" : filterDomain,
+                subdomain: filterSubdomain === "all" ? "" : filterSubdomain,
+                difficulty: filterDifficulty === "all" ? "" : filterDifficulty,
+                status: filterUnderstanding === "all" ? "" : filterUnderstanding,
+                bookmarked: filterBookmarked === "all" ? "" : (filterBookmarked === "yes"),
+                confidence: filterConfidence === "all" ? "" : Number(filterConfidence)
             })
             setNotes(response?.notes || [])
             setTotalPages(response?.totalPages || 1)
@@ -244,19 +250,6 @@ const Notes = () => {
                     </div>
                 </div>
                 
-                <header className="notes-optimized-header compact-view">
-                    <div className="velocity-card small-card">
-                        <div className="velocity-pie-wrap" title={`${stats.understood} understood out of ${stats.total}`}>
-                            <div className="velocity-pie small-pie" style={pieChartStyle}>
-                                <div className="velocity-pie-inner">
-                                    <p>UNDERSTOOD</p>
-                                    <strong>{stats.understood}/{stats.total}</strong>
-                                    <span className="velocity-meta" style={{marginTop: '4px'}}>{stats.avgConfidence} Avg</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </header>
 
                 <div className="notes-content-grid">
                     <div className="notes-column-left">
@@ -273,20 +266,48 @@ const Notes = () => {
                         </div>
 
                         {showFilterOptions && (
-                            <div className="notes-quick-filters card-glass anim-fade">
-                                <div className="filter-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                            <div className="notes-quick-filters card-glass anim-fade" style={{ padding: '0.8rem', marginBottom: '0.8rem' }}>
+                                <div className="filter-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                                     <label>Domain
                                         <select value={filterDomain} onChange={(e) => setFilterDomain(e.target.value)}>
-                                            <option value="all">All</option>
+                                            <option value="all">All Domains</option>
                                             <option value="Technical">Technical</option>
                                             <option value="Behavioral">Behavioral</option>
                                             <option value="Role Specific">Role Based</option>
                                         </select>
                                     </label>
-                                    <label>Sub Domain
+                                    <label>Subdomain
                                         <select value={filterSubdomain} onChange={(e) => setFilterSubdomain(e.target.value)}>
-                                            <option value="all">All</option>
+                                            <option value="all">All Subdomains</option>
                                             {filterSubdomainOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                    </label>
+                                    <label>Difficulty
+                                        <select value={filterDifficulty} onChange={(e) => setFilterDifficulty(e.target.value)}>
+                                            <option value="all">All Difficulty</option>
+                                            <option value="easy">Easy</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="hard">Hard</option>
+                                        </select>
+                                    </label>
+                                    <label>Confidence
+                                        <select value={filterConfidence} onChange={(e) => setFilterConfidence(e.target.value)}>
+                                            <option value="all">Any Confidence</option>
+                                            {[1,2,3,4,5].map(c => <option key={c} value={c}>{c} Stars</option>)}
+                                        </select>
+                                    </label>
+                                    <label>Status
+                                        <select value={filterUnderstanding} onChange={(e) => setFilterUnderstanding(e.target.value)}>
+                                            <option value="all">All Status</option>
+                                            <option value="done">Review Ready</option>
+                                            <option value="needs_revision">In Progress</option>
+                                        </select>
+                                    </label>
+                                    <label>Bookmark
+                                        <select value={filterBookmarked} onChange={(e) => setFilterBookmarked(e.target.value)}>
+                                            <option value="all">All Notes</option>
+                                            <option value="yes">Bookmarked</option>
+                                            <option value="no">Not Bookmarked</option>
                                         </select>
                                     </label>
                                 </div>
