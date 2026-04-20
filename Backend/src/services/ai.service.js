@@ -1,15 +1,24 @@
-const { GoogleGenAI } = require("@google/genai")
-const { z } = require("zod")
-const { zodToJsonSchema } = require("zod-to-json-schema")
-const crypto = require("crypto")
-const { getCache, setCache } = require("../utils/redis")
-let puppeteerLib = null
+require("dotenv").config();
+const { GoogleGenAI } = require("@google/genai");
+const { z } = require("zod");
+const { zodToJsonSchema } = require("zod-to-json-schema");
+const crypto = require("crypto");
+const { getCache, setCache } = require("../utils/redis");
+let puppeteerLib = null;
 
-const ai = new GoogleGenAI({
-    apiKey: process.env.GOOGLE_GENAI_API_KEY
-})
+const RESUME_AI_MODEL = "gemini-3-flash-preview"; 
 
-const RESUME_AI_MODEL = "gemini-3-flash-preview"
+let aiInstance = null;
+function getAi() {
+    if (!aiInstance) {
+        const key = process.env.GOOGLE_GENAI_API_KEY;
+        if (!key) {
+            console.error("[AI-Service] CRITICAL: GOOGLE_GENAI_API_KEY is not defined in environment.");
+        }
+        aiInstance = new GoogleGenAI({ apiKey: key });
+    }
+    return aiInstance;
+}
 
 function generateCacheKey(prefix, data) {
     const hash = crypto.createHash("md5").update(JSON.stringify(data)).digest("hex")
@@ -18,12 +27,15 @@ function generateCacheKey(prefix, data) {
 
 function extractResponseText(response) {
     if (!response) return ""
-    // In @google/genai SDK, text is often a top-level property
+    // Check if it's the result object directly (sometimes @google/genai returns this)
     if (typeof response.text === "string") return response.text
-    // Fallback to result property or candidates list
+    if (typeof response.text === "function") return response.text()
+    
+    // Check candidates
     const candidates = response.candidates || response.result?.candidates
     if (candidates && candidates[0]) {
-        return candidates[0].content?.parts?.map(p => p.text || "").join("") || ""
+        const parts = candidates[0].content?.parts
+        if (parts && parts[0]) return parts[0].text || ""
     }
     return ""
 }
@@ -34,9 +46,10 @@ function safeParseJson(rawText = "") {
     try {
         return JSON.parse(text)
     } catch (err) {
-        const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
+        // Handle common markdown artifacts like ```json or ```javascript
+        const fenced = text.match(/```(?:\w+)?\s*([\s\S]*?)\s*```/i)
         if (fenced?.[1]) return JSON.parse(fenced[1].trim())
-        throw new Error("AI returned malformed JSON.")
+        throw new Error("AI returned malformed JSON: " + text.slice(0, 100));
     }
 }
 
@@ -58,6 +71,7 @@ async function generateStructuredJson({ prompt, schema, cachePrefix = null, cach
         console.log(`[AI-Service] MISS for ${RESUME_AI_MODEL}. Generating...`)
         
         // NEW SDK SYNTAX (for @google/genai v1.46.0+)
+        const ai = getAi();
         const response = await ai.models.generateContent({
             model: RESUME_AI_MODEL,
             contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -69,6 +83,7 @@ async function generateStructuredJson({ prompt, schema, cachePrefix = null, cach
         
         const rawText = extractResponseText(response)
         if (!rawText) throw new Error("Empty response from AI model")
+        console.log(`[AI-Service] Raw Response: ${rawText.slice(0, 200)}...`)
 
         const parsed = safeParseJson(rawText)
         const validated = schema.parse(parsed)
@@ -80,7 +95,7 @@ async function generateStructuredJson({ prompt, schema, cachePrefix = null, cach
 
         return validated
     } catch (error) {
-        console.error(`[AI-Service-Error] ${error.message}`, error)
+        console.error(`[AI-Service-Error] ${error.message || "Unknown error"}`)
         throw error
     }
 }
@@ -147,7 +162,18 @@ Requirements:
 2. Generate EXACTLY 4 technical questions tailored to the role.
 3. Generate EXACTLY 4 behavioral questions.
 4. Provide a PROPER 7-day preparation plan.
-5. Identify skill gaps and top skills accurately.`
+5. Identify skill gaps and top skills accurately.
+Identification of skill gaps and top skills accurately.
+Return ONLY raw JSON in this format: 
+{
+  "matchScore": number,
+  "technicalQuestions": [{"question": string, "intention": string, "answer": string}],
+  "behavioralQuestions": [{"question": string, "intention": string, "answer": string}],
+  "skillGaps": [{"skill": string, "severity": "low"|"medium"|"high"}],
+  "topSkills": [string],
+  "preparationPlan": [{"day": number, "focus": string, "tasks": [string]}],
+  "title": string
+}`
 
     return generateStructuredJson({ 
         prompt, 
@@ -312,7 +338,17 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
     2. CONTENT: Star Method points, Standard Academic order.
     3. SKILLS INJECTION: Automatically identify and ADD missing technical skills that are required for the "Target Job" but missing in "Profile", seamlessly integrating them into the Technical Skills section.
     4. Bullet points for all projects and experience.
-    5. Sections must be: EDUCATION, PROJECTS, TECHNICAL SKILLS, ACHIEVEMENTS, EXPERIENCE, INTERESTS.`;
+    5. Sections must be: EDUCATION, PROJECTS, TECHNICAL SKILLS, ACHIEVEMENTS, EXPERIENCE, INTERESTS.
+    Return ONLY raw JSON matching the schema format:
+    {
+      "header": { "fullName": string, "email": string, "phone": string, "location": string, "links": [{"label": string, "url": string}] },
+      "education": [{"institution": string, "degree": string, "duration": string, "location": string, "details": [string]}],
+      "experience": [{"company": string, "role": string, "duration": string, "location": string, "points": [string]}],
+      "projects": [{"title": string, "techStack": string, "duration": string, "link": string, "points": [string]}],
+      "technicalSkills": [{"category": string, "skills": string}],
+      "achievements": [string],
+      "interests": [string]
+    }`
 
     const data = await generateStructuredJson({ 
         prompt, 
@@ -324,7 +360,13 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
 }
 
 async function generateNoteAnswer({ domain, subdomain, question, sourceTag = "" }) {
-    const prompt = "Generate interview answer for: " + question + "\nDomain: " + domain;
+    const prompt = `Generate an interview answer for: ${question}
+Domain: ${domain}
+Return ONLY raw JSON in this EXACT format:
+{
+  "answerText": "Detailed plain text answer with key points...",
+  "answerHtml": "Same answer but professionally formatted with <strong>, <ul>, <li> tags for readability"
+}`;
     return generateStructuredJson({ 
         prompt, 
         schema: noteAnswerSchema,
