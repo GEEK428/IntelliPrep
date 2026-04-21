@@ -4,6 +4,15 @@ const { z } = require("zod");
 const { zodToJsonSchema } = require("zod-to-json-schema");
 const crypto = require("crypto");
 const { getCache, setCache } = require("../utils/redis");
+
+const ensureAbsoluteUrl = (url) => {
+    if (!url) return "";
+    const s = url.trim();
+    if (s.startsWith("http://") || s.startsWith("https://") || s.startsWith("mailto:") || s.startsWith("tel:")) {
+        return s;
+    }
+    return `https://${s}`;
+};
 let puppeteerLib = null;
 
 const RESUME_AI_MODEL = "gemini-3-flash-preview"; 
@@ -221,7 +230,7 @@ function escapeHtml(text = "") {
 function buildPremiumResumeHtml(data) {
     const { header, education, experience, projects, technicalSkills, achievements, interests } = data;
     // Padded links for centered look
-    const linksHtml = (header.links || []).map(link => `<a href="${link.url}">${link.label}</a>`).join("&nbsp;&nbsp;&nbsp;&nbsp;");
+    const linksHtml = (header.links || []).map(link => `<a href="${ensureAbsoluteUrl(link.url)}" target="_blank">${link.label}</a>`).join("&nbsp;&nbsp;&nbsp;&nbsp;");
 
     const escape = (t) => escapeHtml(t);
 
@@ -262,7 +271,7 @@ function buildPremiumResumeHtml(data) {
         <div class="entry">
             <div class="entry-header">
                 <span class="bold">${escape(proj.title)} ${proj.techStack ? `| <span class="normal">${escape(proj.techStack)}</span>` : ""}</span>
-                <span class="bold right">${escape(proj.duration)} ${proj.link ? `| <a href="${proj.link}">Link</a>` : ""}</span>
+                <span class="bold right">${escape(proj.duration)} ${proj.link ? `| <a href="${ensureAbsoluteUrl(proj.link)}" target="_blank">Link</a>` : ""}</span>
             </div>
             <ul>${proj.points.map(p => `<li>${escape(p)}</li>`).join("")}</ul>
         </div>`).join("");
@@ -381,7 +390,8 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
     5. SKILLS INJECTION: Automatically identify and ADD missing technical skills that are required for the "Target Job" but missing in "Profile", seamlessly integrating them into the Technical Skills section.
     6. Bullet points for all projects and experience.
     7. Sections must be: EDUCATION, PROJECTS, TECHNICAL SKILLS, ACHIEVEMENTS, EXPERIENCE, INTERESTS.
-    8. Keep bullet points concise (max 1.5 lines each) to fit everything on one page.
+    8. Links: Ensure ALL urls (links) are absolute and start with https:// (e.g. https://github.com/user).
+    9. Keep bullet points concise (max 1.5 lines each) to fit everything on one page.
     Return ONLY raw JSON matching the schema format:
     {
       "header": { "fullName": string, "email": string, "phone": string, "location": string, "links": [{"label": string, "url": string}] },
