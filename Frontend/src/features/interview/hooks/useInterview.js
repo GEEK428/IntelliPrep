@@ -102,6 +102,12 @@ export const useInterview = () => {
         setLoading(true)
         try {
             const response = await generateResumePdf({ interviewReportId })
+            // Check if it's actually an error response wrapped in a blob (axios with responseType: blob does this)
+            if (response.type === "application/json") {
+                const text = await response.text();
+                const errorData = JSON.parse(text);
+                throw { response: { data: errorData } };
+            }
             return new Blob([ response ], { type: "application/pdf" })
         } catch (error) {
             console.log(error)

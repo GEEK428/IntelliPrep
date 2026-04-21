@@ -32,7 +32,11 @@ const Interview = () => {
                 link.remove()
                 setTimeout(() => window.URL.revokeObjectURL(url), 2000)
             }
-        } catch (e) { console.error(e) }
+        } catch (e) { 
+            console.error(e) 
+            const msg = e.response?.data?.message || "Failed to download PDF. Please try again."
+            alert(msg)
+        }
     }
 
     useEffect(() => {
