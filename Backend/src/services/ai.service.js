@@ -15,7 +15,7 @@ const ensureAbsoluteUrl = (url) => {
 };
 let puppeteerLib = null;
 
-const RESUME_AI_MODEL = "gemini-1.5-pro-latest"; 
+const RESUME_AI_MODEL = "gemini-3-flash-preview"; 
 
 let aiInstance = null;
 function getAi() {
@@ -62,7 +62,7 @@ function safeParseJson(rawText = "") {
     }
 }
 
-const FALLBACK_MODEL = "gemini-1.5-flash-latest";
+const FALLBACK_MODEL = "gemini-1.5-pro-latest";
 const MAX_RETRIES = 3;
 
 async function callAiWithRetry(prompt, schema) {
