@@ -10,6 +10,9 @@ const requestLogger = require("./middlewares/logger.middleware")
 
 const app = express()
 
+// Trust proxy is required for accurate rate limiting when deployed (Render, Vercel, etc.)
+app.set('trust proxy', 1);
+
 // Global Store for Rate Limiting (Redis preference, Fallback to Memory)
 const store = redisClient ? new RedisStore({
     sendCommand: (...args) => redisClient.call(...args),
