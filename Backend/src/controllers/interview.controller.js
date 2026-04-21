@@ -413,18 +413,23 @@ async function generateResumePdfController(req, res) {
         pdfBuffer = await generatePdfFromHtml(fallbackHtml)
     }
 
-    /* Persist asynchronously so we don't slow down the response */
-    interviewReportModel.findByIdAndUpdate(interviewReportId, {
-        resumePdfCache: pdfBuffer,
-        resumeInputHash: currentHash
-    }).catch(err => console.error("[ResumeBuilder] Failed to cache PDF:", err))
+    try {
+        /* Sync save to Mongo before response for persistence */
+        await interviewReportModel.findByIdAndUpdate(interviewReportId, {
+            resumePdfCache: pdfBuffer,
+            resumeInputHash: currentHash
+        });
+        console.log(`[ResumeBuilder] PDF Persisted to MongoDB — report ${interviewReportId}`)
+    } catch (err) {
+        console.error("[ResumeBuilder] Failed to persist PDF to MongoDB:", err)
+    }
 
     res.set({
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename=resume_${interviewReportId}.pdf`,
         "X-Cache": "MISS"
     })
-    res.send(pdfBuffer)
+    return res.send(pdfBuffer)
 }
 
 

@@ -10,8 +10,24 @@ import "../style/interview.scss"
 const Interview = () => {
     const navigate = useNavigate()
     const { interviewId } = useParams()
-    const { report, getReportById, loading } = useInterview()
+    const { report, getReportById, loading, getResumePdfBlob } = useInterview()
     const [activeTab, setActiveTab] = useState("technical")
+
+    const triggerDownload = async ({ reportId, fileName }) => {
+        if (!reportId) return
+        try {
+            const blob = await getResumePdfBlob(reportId)
+            if (!blob) return
+            const url = window.URL.createObjectURL(blob)
+            const link = document.createElement("a")
+            link.href = url
+            link.setAttribute("download", fileName ? `${fileName.replace(/\s+/g, '_')}_optimized.pdf` : `resume_${reportId}.pdf`)
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            setTimeout(() => window.URL.revokeObjectURL(url), 2000)
+        } catch (e) { console.error(e) }
+    }
 
     useEffect(() => {
         if (interviewId) {
@@ -53,12 +69,22 @@ const Interview = () => {
 
             <section className="dashboard-main interview-main">
                 <TopBar />
-                <div className="page-header" style={{ marginBottom: '1rem' }}>
-                    <p className="kicker" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: '#9fd0f4' }}>analytics</span>
-                        {safeReport.title}
-                    </p>
-                    <p className="subtitle">Your match report with strengths, skill gaps, questions, and a preparation roadmap.</p>
+                <div className="page-header" style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                        <p className="kicker" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: '#9fd0f4' }}>analytics</span>
+                            {safeReport.title}
+                        </p>
+                        <p className="subtitle">Your match report with strengths, skill gaps, questions, and a preparation roadmap.</p>
+                    </div>
+                    <button 
+                        className="hero-btn" 
+                        style={{ padding: '0.6rem 1rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        onClick={() => triggerDownload({ reportId: interviewId, fileName: safeReport.title })}
+                    >
+                        <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>download</span>
+                        OPTIMIZED RESUME
+                    </button>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
