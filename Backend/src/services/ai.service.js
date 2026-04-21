@@ -348,11 +348,23 @@ function buildPremiumResumeHtml(data) {
     return html;
 }
 
-async function generatePdfFromHtml(htmlContent) {
-    if (!puppeteerLib) puppeteerLib = require("puppeteer")
-    let browser
+let _browserInstance = null;
+let _browserLock = false;
+
+async function getBrowser() {
+    if (_browserInstance && _browserInstance.connected) return _browserInstance;
+    
+    // Simple lock to prevent concurrent launches
+    if (_browserLock) {
+        while (_browserLock) await new Promise(r => setTimeout(r, 100));
+        return getBrowser();
+    }
+    
+    _browserLock = true;
     try {
-        browser = await puppeteerLib.launch({
+        if (!puppeteerLib) puppeteerLib = require("puppeteer");
+        console.log("[Puppeteer] Launching singleton browser instance...");
+        _browserInstance = await puppeteerLib.launch({
             executablePath: process.env.NODE_ENV === "production" ? "/usr/bin/chromium" : undefined,
             args: [
                 "--no-sandbox", 
@@ -365,21 +377,50 @@ async function generatePdfFromHtml(htmlContent) {
                 "--font-render-hinting=none"
             ],
             headless: "new"
-        })
-        /* Set a 25s timeout for the whole PDF process to prevent hanging on free tier */
-        const page = await browser.newPage()
+        });
+        
+        _browserInstance.on('disconnected', () => {
+            console.log("[Puppeteer] Browser disconnected, clearing instance.");
+            _browserInstance = null;
+        });
+        
+        return _browserInstance;
+    } finally {
+        _browserLock = false;
+    }
+}
+
+let _activePages = 0;
+const MAX_PAGES = 2;
+
+async function generatePdfFromHtml(htmlContent) {
+    // Wait for a slot if the server is busy
+    while (_activePages >= MAX_PAGES) {
+        await new Promise(r => setTimeout(r, 500));
+    }
+    
+    _activePages++;
+    const browser = await getBrowser();
+    let page = null;
+    try {
+        page = await browser.newPage();
+        /* Set a 25s timeout for the whole PDF process */
         await Promise.race([
             page.setContent(htmlContent, { waitUntil: "networkidle0" }),
             new Promise((_, reject) => setTimeout(() => reject(new Error("PDF generation timed out")), 25000))
         ]);
-        return await page.pdf({ format: "A4", margin: { top: "10mm", bottom: "10mm", left: "10mm", right: "10mm" }, printBackground: true })
+        return await page.pdf({ 
+            format: "A4", 
+            margin: { top: "10mm", bottom: "10mm", left: "10mm", right: "10mm" }, 
+            printBackground: true 
+        });
+    } catch (err) {
+        console.error("[Puppeteer] PDF Generation Error:", err.message);
+        throw err;
     } finally {
-        if (browser) {
-            try {
-                await browser.close()
-            } catch (err) {
-                console.error("[AI-Service] Failed to close browser:", err.message)
-            }
+        _activePages--; // Release slot
+        if (page) {
+            try { await page.close(); } catch (e) {}
         }
     }
 }

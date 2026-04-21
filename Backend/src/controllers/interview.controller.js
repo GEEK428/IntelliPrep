@@ -365,9 +365,10 @@ async function generateResumePdfController(req, res) {
         return res.status(404).json({ message: "Interview report not found." })
     }
 
-    if (interviewReport.matchScore >= 90) {
+    if (interviewReport.matchScore >= 85) {
         return res.status(400).json({
-            message: `No optimization required. Your resume already has an excellent match score of ${interviewReport.matchScore}%!`
+            message: `Match score is sufficient. Your current profile already shows a ${interviewReport.matchScore}% match for this role, which is excellent! Optimization is not required.`,
+            isSufficient: true
         })
     }
 

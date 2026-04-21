@@ -18,25 +18,6 @@ const ResumeAnalysis = () => {
     const resumeInputRef = useRef()
     const navigate = useNavigate()
 
-    const triggerDownload = async ({ reportId, fileName }) => {
-        if (!reportId) return
-        try {
-            const blob = await getResumePdfBlob(reportId)
-            if (!blob) return
-            const url = window.URL.createObjectURL(blob)
-            const link = document.createElement("a")
-            link.href = url
-            link.setAttribute("download", fileName ? `${fileName.replace(/\s+/g, '_')}_optimized.pdf` : `resume_${reportId}.pdf`)
-            document.body.appendChild(link)
-            link.click()
-            link.remove()
-            setTimeout(() => window.URL.revokeObjectURL(url), 2000)
-        } catch (e) { 
-            console.error(e) 
-            setError("Failed to download PDF. Please try again.")
-        }
-    }
-
     const [modalPage, setModalPage] = useState(1);
     const MODAL_PAGE_SIZE = 10;
 
@@ -202,9 +183,6 @@ const ResumeAnalysis = () => {
                                             <div className="plan-actions">
                                                 <button title="View Report" onClick={(e) => { e.stopPropagation(); navigate(`/interview/${report._id}`) }}>
                                                     <span className="material-symbols-outlined">visibility</span>
-                                                </button>
-                                                <button title="Download Optimized Resume" onClick={(e) => { e.stopPropagation(); triggerDownload({ reportId: report._id, fileName: report.title }) }}>
-                                                    <span className="material-symbols-outlined">download</span>
                                                 </button>
                                             </div>
                                         </li>

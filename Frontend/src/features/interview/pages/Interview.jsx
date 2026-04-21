@@ -19,13 +19,19 @@ const Interview = () => {
             const blob = await getResumePdfBlob(reportId)
             if (!blob) return
             const url = window.URL.createObjectURL(blob)
-            const link = document.createElement("a")
-            link.href = url
-            link.setAttribute("download", fileName ? `${fileName.replace(/\s+/g, '_')}_optimized.pdf` : `resume_${reportId}.pdf`)
-            document.body.appendChild(link)
-            link.click()
-            link.remove()
-            setTimeout(() => window.URL.revokeObjectURL(url), 2000)
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+            
+            if (isMobile) {
+                window.open(url, '_blank')
+            } else {
+                const link = document.createElement("a")
+                link.href = url
+                link.setAttribute("download", fileName ? `${fileName.replace(/\s+/g, '_')}_optimized.pdf` : `resume_${reportId}.pdf`)
+                document.body.appendChild(link)
+                link.click()
+                link.remove()
+                setTimeout(() => window.URL.revokeObjectURL(url), 2000)
+            }
         } catch (e) { console.error(e) }
     }
 
@@ -69,22 +75,55 @@ const Interview = () => {
 
             <section className="dashboard-main interview-main">
                 <TopBar />
-                <div className="page-header" style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
+                <div className="page-header" style={{ marginBottom: '1.2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div style={{ flex: '1 1 300px' }}>
                         <p className="kicker" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                             <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: '#9fd0f4' }}>analytics</span>
                             {safeReport.title}
                         </p>
                         <p className="subtitle">Your match report with strengths, skill gaps, questions, and a preparation roadmap.</p>
                     </div>
-                    <button 
-                        className="hero-btn" 
-                        style={{ padding: '0.6rem 1rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                        onClick={() => triggerDownload({ reportId: interviewId, fileName: safeReport.title })}
-                    >
-                        <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>download</span>
-                        OPTIMIZED RESUME
-                    </button>
+
+                    {safeReport.matchScore >= 85 ? (
+                        <div className="status-badge-container" style={{ textAlign: 'right' }}>
+                            <div style={{ color: '#67d7ac', fontSize: '0.7rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'flex-end', marginBottom: '0.2rem' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>verified</span>
+                                TARGET PROFILE MATCHED
+                            </div>
+                            <p style={{ margin: 0, fontSize: '0.62rem', color: 'rgba(234, 243, 251, 0.5)', maxWidth: '240px', lineHeight: '1.3' }}>
+                                Your match score is high ({safeReport.matchScore}%). Optimization is not required for this role.
+                            </p>
+                        </div>
+                    ) : (
+                        <button 
+                            className="hero-btn" 
+                            style={{ padding: '0.6rem 1rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                            onClick={() => {
+                                triggerDownload({ reportId: interviewId, fileName: safeReport.title });
+                                
+                                // Sync with Optimizer History
+                                try {
+                                    const KEY = "intelliprep_resume_download_history";
+                                    const prev = JSON.parse(localStorage.getItem(KEY) || "[]");
+                                    const entry = {
+                                        reportId: interviewId,
+                                        title: safeReport.title,
+                                        score: safeReport.matchScore,
+                                        createdAt: new Date().toISOString()
+                                    };
+                                    // Add if not already present in the last few minutes
+                                    const exists = prev.find(p => p.reportId === interviewId && (Date.now() - new Date(p.createdAt).getTime() < 60000));
+                                    if (!exists) {
+                                        const next = [entry, ...prev].slice(0, 50);
+                                        localStorage.setItem(KEY, JSON.stringify(next));
+                                    }
+                                } catch(e) {}
+                            }}
+                        >
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>download</span>
+                            OPTIMIZED RESUME
+                        </button>
+                    )}
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
