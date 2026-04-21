@@ -27,25 +27,27 @@ app.use(requestLogger)
 // Rate Limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    limit: 1000, // Increased to 1000 to allow busy sessions
+    limit: 1000, 
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     store,
-    skip: (req) => {
-        // Don't rate limit pre-flight or health checks (Uptime Robot)
-        return req.method === 'OPTIONS' || req.path === '/api/health' || req.originalUrl === '/api/health';
-    },
+    skip: (req) => req.method === 'OPTIONS' || req.path === '/api/health',
     message: { message: "Too many requests from this IP, please try again later." }
 })
 app.use(limiter)
 
-// Stricter limit specifically for AI routes — they're expensive
+// Stricter limit specifically for AI routes — unique store to prevent ERR_ERL_STORE_REUSE
+const aiStore = redisClient ? new RedisStore({
+    sendCommand: (...args) => redisClient.call(...args),
+    prefix: "rl-ai:", 
+}) : undefined;
+
 const aiLimiter = rateLimit({
     windowMs: 60 * 1000, 
-    limit: 15, // Relaxed to 15 per minute
+    limit: 15,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
-    store, // Reuse the same Redis store
+    store: aiStore,
     skip: (req) => req.method === 'OPTIONS',
     message: { message: "AI request limit reached. Please wait a moment." }
 })
