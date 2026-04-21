@@ -111,6 +111,13 @@ export const useInterview = () => {
             return new Blob([ response ], { type: "application/pdf" })
         } catch (error) {
             console.log(error)
+            // Handle binary-wrapped JSON errors
+            if (error.response?.data instanceof Blob && error.response.data.type === "application/json") {
+                try {
+                    const text = await error.response.data.text();
+                    error.response.data = JSON.parse(text);
+                } catch (e) {}
+            }
             throw error
         } finally {
             setLoading(false)
